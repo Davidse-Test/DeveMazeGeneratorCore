@@ -40,6 +40,9 @@ namespace DeveMazeGeneratorMonoGame
 
         private Camera camera;
         private Basic3dExampleCamera newcamera;
+        
+        // Mobile controls
+        private MobileControls mobileControls;
 
         private BasicEffect effect;
 
@@ -172,6 +175,7 @@ namespace DeveMazeGeneratorMonoGame
             if (platform == Platform.Android)
             {
                 showUi = false;
+                UseNewCamera = true; // Enable the new camera by default on Android
             }
 
             //This is required for Blazor since it loads assets in a custom way
@@ -197,6 +201,9 @@ namespace DeveMazeGeneratorMonoGame
             newcamera = new Basic3dExampleCamera(GraphicsDevice, this);
             newcamera.Position = new Vector3(7.5f, 7.5f, 7.5f);
             newcamera.LookAtDirection = Vector3.Forward;
+            
+            // Initialize mobile controls
+            mobileControls = new MobileControls(this);
 
             Window.ClientSizeChanged += Window_ClientSizeChanged;
             Window.OrientationChanged += Window_OrientationChanged;
@@ -253,6 +260,9 @@ namespace DeveMazeGeneratorMonoGame
             effect = new BasicEffect(GraphicsDevice);
 
             ContentDing.GoLoadContent(GraphicsDevice, Content);
+            
+            // Initialize mobile controls
+            mobileControls.Initialize(GraphicsDevice);
 
             playerModel = new PlayerModel(this);
 
@@ -281,6 +291,12 @@ namespace DeveMazeGeneratorMonoGame
             ScreenHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
 
             camera.TriggerScreenSizeChanged();
+            
+            // Update mobile UI positions when screen size changes
+            if (mobileControls != null)
+            {
+                mobileControls.UpdateControlPositions();
+            }
         }
 
         public void ResetMouseToCenter()
@@ -306,6 +322,18 @@ namespace DeveMazeGeneratorMonoGame
         public void ToggleNewCamera()
         {
             UseNewCamera = true;
+            
+            // When enabling the new camera on mobile platforms, ensure the camera mode is set correctly
+            if (Platform == Platform.Android || Platform == Platform.Blazor)
+            {
+                Basic3dExampleCamera camera = GetCamera();
+                if (camera != null && mobileControls != null)
+                {
+                    camera.CameraUi(mobileControls.IsFpsMode ? 
+                        Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT : 
+                        Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
+                }
+            }
         }
 
         public void ToggleFullScreenBetter()
@@ -824,6 +852,12 @@ namespace DeveMazeGeneratorMonoGame
             if (UseNewCamera)
             {
                 newcamera.Update(gameTime);
+                
+                // Update mobile controls when using new camera
+                if (Platform == Platform.Android || Platform == Platform.Blazor)
+                {
+                    mobileControls.Update(gameTime);
+                }
             }
             else
             {
@@ -1151,6 +1185,12 @@ namespace DeveMazeGeneratorMonoGame
 
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            
+            // Draw mobile controls on mobile platforms or Blazor
+            if ((Platform == Platform.Android || Platform == Platform.Blazor) && UseNewCamera)
+            {
+                mobileControls.Draw();
+            }
 
             base.Draw(gameTime);
         }
