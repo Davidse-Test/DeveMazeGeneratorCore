@@ -61,9 +61,15 @@ namespace DeveMazeGeneratorMonoGame
                     float xDifference = currentMouseState.X - (game.AllowMouseResets ? (game.ScreenWidth / 2) : mState.X);
                     float yDifference = currentMouseState.Y - (game.AllowMouseResets ? (game.ScreenHeight / 2) : mState.Y);
                     game.ResetMouseToCenter();
-                    leftrightRot -= rotationSpeed * xDifference * timeDifference;
+                    
+                    // Normalize the mouse movement to be frame-rate independent
+                    const float targetFrameTime = 1/60f; // 60 FPS as our reference rate
+                    float normalizedXDiff = xDifference * (targetFrameTime / timeDifference);
+                    float normalizedYDiff = yDifference * (targetFrameTime / timeDifference);
+                    
+                    leftrightRot -= rotationSpeed * normalizedXDiff * timeDifference;
 
-                    var newUpDownRot = updownRot - (rotationSpeed * yDifference * timeDifference);
+                    var newUpDownRot = updownRot - (rotationSpeed * normalizedYDiff * timeDifference);
 
                     updownRot = MathHelper.Clamp(newUpDownRot, -MathHelper.PiOver2, MathHelper.PiOver2);
                 }
