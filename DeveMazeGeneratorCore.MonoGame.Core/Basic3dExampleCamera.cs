@@ -548,7 +548,11 @@ namespace DeveMazeGeneratorCore.MonoGame.Core
         // just for example this is the same as the above rotate left or right.
         public void RotateLeftOrRight(GameTime gameTime, float amount)
         {
-            var radians = amount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            // Normalize the amount to be frame-rate independent
+            // By using a fixed time constant we ensure consistent rotation regardless of frame rate
+            const float targetFrameTime = 1/60f; // 60 FPS as our reference rate
+            float normalizedAmount = amount * (targetFrameTime / (float)gameTime.ElapsedGameTime.TotalSeconds);
+            var radians = normalizedAmount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             Matrix matrix;
             if (cameraTypeOption == CAM_TYPE_OPTION_FIXED)
@@ -565,7 +569,11 @@ namespace DeveMazeGeneratorCore.MonoGame.Core
 
         public void RotateUpOrDown(GameTime gameTime, float amount)
         {
-            var radians = amount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            // Normalize the amount to be frame-rate independent
+            // By using a fixed time constant we ensure consistent rotation regardless of frame rate
+            const float targetFrameTime = 1/60f; // 60 FPS as our reference rate
+            float normalizedAmount = amount * (targetFrameTime / (float)gameTime.ElapsedGameTime.TotalSeconds);
+            var radians = normalizedAmount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
             Matrix matrix = Matrix.CreateFromAxisAngle(camerasWorld.Right, MathHelper.ToRadians(radians));
 
             if (cameraTypeOption == CAM_TYPE_OPTION_FIXED)
@@ -621,7 +629,10 @@ namespace DeveMazeGeneratorCore.MonoGame.Core
         /// </summary>
         public void NonLocalRotateLeftOrRight(GameTime gameTime, float amount)
         {
-            var radians = amount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            // Normalize the amount to be frame-rate independent
+            const float targetFrameTime = 1/60f; // 60 FPS as our reference rate
+            float normalizedAmount = amount * (targetFrameTime / (float)gameTime.ElapsedGameTime.TotalSeconds);
+            var radians = normalizedAmount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
             Matrix matrix = Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(radians));
             LookAtDirection = Vector3.TransformNormal(LookAtDirection, matrix);
             ReCreateWorldAndView();
@@ -631,7 +642,10 @@ namespace DeveMazeGeneratorCore.MonoGame.Core
         /// </summary>
         public void NonLocalRotateUpOrDown(GameTime gameTime, float amount)
         {
-            var radians = amount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            // Normalize the amount to be frame-rate independent
+            const float targetFrameTime = 1/60f; // 60 FPS as our reference rate
+            float normalizedAmount = amount * (targetFrameTime / (float)gameTime.ElapsedGameTime.TotalSeconds);
+            var radians = normalizedAmount * -RotationRadiansPerSecond * (float)gameTime.ElapsedGameTime.TotalSeconds;
             Matrix matrix = Matrix.CreateFromAxisAngle(Vector3.Right, MathHelper.ToRadians(radians));
             LookAtDirection = Vector3.TransformNormal(LookAtDirection, matrix);
             ReCreateWorldAndView();
