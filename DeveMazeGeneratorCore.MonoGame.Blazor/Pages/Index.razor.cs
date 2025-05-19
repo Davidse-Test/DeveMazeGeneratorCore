@@ -16,6 +16,9 @@ namespace DeveMazeGeneratorCore.MonoGame.Blazor.Pages
         // Flag to show/hide camera controls
         public bool ShowCameraControls { get; set; } = true;
         
+        // Flag to track camera mode (FPS or Edit)
+        public bool IsFpsMode { get; set; } = true;
+        
         // Dictionary to track which movement buttons are currently pressed
         private Dictionary<string, bool> _pressedButtons = new Dictionary<string, bool>
         {
@@ -56,6 +59,12 @@ namespace DeveMazeGeneratorCore.MonoGame.Blazor.Pages
 
                 _game = new TheGame(new CustomEmbeddedResourceLoader(), new IntSize(400, 800), Platform.Blazor);
                 _game.Run();
+                
+                // Enable the new camera by default
+                _game.ToggleNewCamera();
+                
+                // Set the initial camera mode based on our UI state
+                UpdateCameraMode();
             }
 
             // Process camera movement from touch controls
@@ -91,6 +100,22 @@ namespace DeveMazeGeneratorCore.MonoGame.Blazor.Pages
                 camera.MoveUp(gameTime);
             if (_pressedButtons["DownVert"])
                 camera.MoveDown(gameTime);
+        }
+
+        // Update the camera mode based on UI state
+        private void UpdateCameraMode()
+        {
+            if (_game == null)
+                return;
+                
+            Basic3dExampleCamera camera = _game.GetCamera();
+            if (camera == null)
+                return;
+                
+            // Set camera UI mode based on our toggle state
+            camera.CameraUi(IsFpsMode ? 
+                Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT : 
+                Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
         }
 
         // Button event handlers
@@ -155,6 +180,13 @@ namespace DeveMazeGeneratorCore.MonoGame.Blazor.Pages
         public void ToggleCameraControls()
         {
             ShowCameraControls = !ShowCameraControls;
+        }
+        
+        // Toggle between FPS and Edit camera modes
+        public void ToggleCameraMode()
+        {
+            IsFpsMode = !IsFpsMode;
+            UpdateCameraMode();
         }
 
         // Original touch handlers for the canvas

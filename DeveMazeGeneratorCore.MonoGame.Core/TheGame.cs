@@ -299,6 +299,14 @@ namespace DeveMazeGeneratorMonoGame
         {
             return UseNewCamera ? newcamera : null;
         }
+        
+        /// <summary>
+        /// Toggle the NewCamera flag to enable the Basic3dExampleCamera
+        /// </summary>
+        public void ToggleNewCamera()
+        {
+            UseNewCamera = true;
+        }
 
         public void ToggleFullScreenBetter()
         {
