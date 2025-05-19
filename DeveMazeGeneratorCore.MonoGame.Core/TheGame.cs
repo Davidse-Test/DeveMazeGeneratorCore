@@ -290,6 +290,15 @@ namespace DeveMazeGeneratorMonoGame
                 Mouse.SetPosition(ScreenWidth / 2, ScreenHeight / 2);
             }
         }
+        
+        /// <summary>
+        /// Gets the current camera for external control
+        /// </summary>
+        /// <returns>The active camera instance</returns>
+        public Basic3dExampleCamera GetCamera()
+        {
+            return UseNewCamera ? newcamera : null;
+        }
 
         public void ToggleFullScreenBetter()
         {
