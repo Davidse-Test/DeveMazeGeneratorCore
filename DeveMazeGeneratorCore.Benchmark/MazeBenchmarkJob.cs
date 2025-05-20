@@ -22,7 +22,6 @@ namespace DeveMazeGeneratorCore.Benchmark
     [JsonExporterAttribute.Full]
     [JsonExporterAttribute.FullCompressed]
     [
-        //DeveJob(RuntimeMoniker.Net60, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
         DeveJob(RuntimeMoniker.Net70, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
     ]
     [AsciiDocExporter]
@@ -32,6 +31,7 @@ namespace DeveMazeGeneratorCore.Benchmark
     [Config(typeof(Config))]
     public class MazeBenchmarkJob
     {
+        // Use consistent size values for better comparison over time
         private const int SIZE = 4096 * 2 * 2;
         private const int SEED = 1337;
 

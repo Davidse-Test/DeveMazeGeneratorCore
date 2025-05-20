@@ -29,6 +29,17 @@ This is the new version of my maze generator, now made with .NET Core.
 |:---------:|
 | [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=DeveMazeGeneratorCore&metric=alert_status)](https://sonarcloud.io/dashboard?id=DeveMazeGeneratorCore) |
 
+## Performance Benchmarks
+
+The project includes nightly performance benchmarks that track maze generation performance over time.
+
+| Performance Dashboard |
+|:---------------------:|
+| [View Performance Trends](https://davidse-test.github.io/DeveMazeGeneratorCore/) |
+
+The performance dashboard displays historical benchmark data for all maze generation algorithms,
+showing how performance has changed over time with each code change.
+
 ## Package
 
 | NuGet |

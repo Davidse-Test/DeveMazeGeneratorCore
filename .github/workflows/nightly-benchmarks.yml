@@ -1,0 +1,346 @@
+name: Nightly Performance Benchmarks
+
+on:
+  schedule:
+    # Run at 2:00 UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  run_benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    
+    - name: Restore dependencies
+      run: dotnet restore DeveMazeGeneratorCore.Benchmark/DeveMazeGeneratorCore.Benchmark.csproj
+    
+    - name: Build benchmark project
+      run: dotnet build DeveMazeGeneratorCore.Benchmark/DeveMazeGeneratorCore.Benchmark.csproj -c Release --no-restore
+    
+    - name: Run benchmarks
+      run: |
+        # Run a quick benchmark with fewer iterations for CI
+        dotnet run --project DeveMazeGeneratorCore.Benchmark/DeveMazeGeneratorCore.Benchmark.csproj -c Release --no-build
+    
+    - name: Create results directory if it doesn't exist
+      run: mkdir -p BenchmarkResults
+    
+    - name: Copy benchmark results
+      run: |
+        cp -r BenchmarkDotNet.Artifacts/results/* BenchmarkResults/
+        # Add date prefix to filenames
+        DATE_PREFIX=$(date +%Y%m%d)
+        for file in BenchmarkResults/*.json; do
+          if [[ -f "$file" ]]; then
+            mv "$file" "BenchmarkResults/${DATE_PREFIX}_$(basename "$file")"
+          fi
+        done
+    
+    - name: Commit benchmark results to gh-pages branch
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git fetch origin
+        if git checkout gh-pages; then
+          echo "Checked out existing gh-pages branch"
+        else
+          git checkout --orphan gh-pages
+          git rm -rf .
+          echo "# DeveMazeGeneratorCore Benchmark Results" > README.md
+          git add README.md
+          git commit -m "Initialize gh-pages branch"
+        fi
+        
+        # Create benchmark-results directory if it doesn't exist
+        mkdir -p benchmark-results
+        
+        # Copy current results to the benchmark-results directory
+        cp -r BenchmarkResults/* benchmark-results/
+        
+        # Add visualization files if they don't exist yet
+        if [ ! -f "index.html" ]; then
+          echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DeveMazeGeneratorCore - Performance Benchmark</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>DeveMazeGeneratorCore - Performance Benchmark</h1>
+        <p class="lead">This page shows the benchmark results over time for different maze generation algorithms.</p>
+        
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="list-group" id="algorithm-list">
+                    <!-- Algorithm buttons will be added here -->
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-body">
+                        <canvas id="benchmark-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const resultsFolder = "benchmark-results";
+        let benchmarkData = [];
+        let algorithms = new Set();
+        let selectedAlgorithm = null;
+        let chart = null;
+
+        // Get all JSON files from the benchmark-results folder
+        async function loadBenchmarkFiles() {
+            try {
+                const response = await fetch("benchmark-files.json");
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch benchmark files: ${response.status}`);
+                }
+                const files = await response.json();
+                return files;
+            } catch (error) {
+                console.error("Error loading benchmark files:", error);
+                return [];
+            }
+        }
+
+        async function loadBenchmarkData(files) {
+            benchmarkData = [];
+            
+            for (const file of files) {
+                if (!file.endsWith(".json")) continue;
+                
+                try {
+                    const response = await fetch(`${resultsFolder}/${file}`);
+                    if (!response.ok) {
+                        console.error(`Failed to fetch ${file}: ${response.status}`);
+                        continue;
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Extract date from filename (format: YYYYMMDD_*)
+                    const dateMatch = file.match(/^(\d{8})_/);
+                    const dateStr = dateMatch ? dateMatch[1] : null;
+                    
+                    if (!dateStr) {
+                        console.warn(`Could not extract date from filename: ${file}`);
+                        continue;
+                    }
+                    
+                    // Parse date in format YYYYMMDD
+                    const year = dateStr.substring(0, 4);
+                    const month = dateStr.substring(4, 6);
+                    const day = dateStr.substring(6, 8);
+                    const date = new Date(`${year}-${month}-${day}`);
+                    
+                    // Process benchmark data
+                    const benchmarks = data.Benchmarks || [];
+                    for (const benchmark of benchmarks) {
+                        const params = benchmark.Parameters || {};
+                        const algorithmName = params.algorithm || benchmark.Method;
+                        
+                        algorithms.add(algorithmName);
+                        
+                        benchmarkData.push({
+                            date: date,
+                            algorithm: algorithmName,
+                            mean: benchmark.Statistics?.Mean || 0,
+                            min: benchmark.Statistics?.Min || 0,
+                            max: benchmark.Statistics?.Max || 0,
+                            dateString: `${year}-${month}-${day}`
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error processing ${file}:`, error);
+                }
+            }
+            
+            // Sort data by date
+            benchmarkData.sort((a, b) => a.date - b.date);
+            
+            // Populate algorithm list
+            populateAlgorithmList();
+            
+            // Select first algorithm if none selected
+            if (!selectedAlgorithm && algorithms.size > 0) {
+                selectedAlgorithm = Array.from(algorithms)[0];
+                updateChart();
+            }
+        }
+
+        function populateAlgorithmList() {
+            const algorithmList = document.getElementById("algorithm-list");
+            algorithmList.innerHTML = "";
+            
+            for (const algorithm of Array.from(algorithms).sort()) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = `list-group-item list-group-item-action ${algorithm === selectedAlgorithm ? "active" : ""}`;
+                button.textContent = algorithm;
+                button.addEventListener("click", () => {
+                    selectedAlgorithm = algorithm;
+                    updateChart();
+                    
+                    // Update active state
+                    document.querySelectorAll("#algorithm-list button").forEach(btn => {
+                        btn.classList.remove("active");
+                    });
+                    button.classList.add("active");
+                });
+                
+                algorithmList.appendChild(button);
+            }
+        }
+
+        function updateChart() {
+            if (!selectedAlgorithm) return;
+            
+            // Filter data for selected algorithm
+            const filteredData = benchmarkData.filter(d => d.algorithm === selectedAlgorithm);
+            
+            // Prepare chart data
+            const dates = [...new Set(filteredData.map(d => d.dateString))];
+            const means = dates.map(date => {
+                const entry = filteredData.find(d => d.dateString === date);
+                return entry ? entry.mean / 1000000 : null; // Convert ns to ms
+            });
+            
+            const mins = dates.map(date => {
+                const entry = filteredData.find(d => d.dateString === date);
+                return entry ? entry.min / 1000000 : null; // Convert ns to ms
+            });
+            
+            const maxs = dates.map(date => {
+                const entry = filteredData.find(d => d.dateString === date);
+                return entry ? entry.max / 1000000 : null; // Convert ns to ms
+            });
+            
+            // Create or update chart
+            const ctx = document.getElementById("benchmark-chart").getContext("2d");
+            
+            if (chart) {
+                chart.destroy();
+            }
+            
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: "Mean (ms)",
+                            data: means,
+                            borderColor: "rgba(54, 162, 235, 1)",
+                            backgroundColor: "rgba(54, 162, 235, 0.2)",
+                            tension: 0.1,
+                            fill: false
+                        },
+                        {
+                            label: "Min (ms)",
+                            data: mins,
+                            borderColor: "rgba(75, 192, 192, 1)",
+                            backgroundColor: "rgba(75, 192, 192, 0.2)",
+                            tension: 0.1,
+                            fill: false
+                        },
+                        {
+                            label: "Max (ms)",
+                            data: maxs,
+                            borderColor: "rgba(255, 99, 132, 1)",
+                            backgroundColor: "rgba(255, 99, 132, 0.2)",
+                            tension: 0.1,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Performance of ${selectedAlgorithm} over time`
+                        },
+                        tooltip: {
+                            mode: "index",
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: "Date"
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: "Execution Time (ms)"
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        async function initialize() {
+            const files = await loadBenchmarkFiles();
+            if (files.length > 0) {
+                await loadBenchmarkData(files);
+            } else {
+                document.querySelector(".container").innerHTML += `
+                    <div class="alert alert-warning mt-4">
+                        No benchmark data found. Please wait for the next nightly benchmark run or trigger one manually.
+                    </div>
+                `;
+            }
+        }
+
+        initialize();
+    </script>
+</body>
+</html>' > index.html
+        fi
+        
+        # Create a JSON file that lists all benchmark result files
+        ls -1 benchmark-results/*.json > benchmark-files.txt
+        echo '[' > benchmark-files.json
+        first=true
+        while IFS= read -r file; do
+          filename=$(basename "$file")
+          if [ "$first" = true ]; then
+            echo "  \"$filename\"" >> benchmark-files.json
+            first=false
+          else
+            echo "  ,\"$filename\"" >> benchmark-files.json
+          fi
+        done < benchmark-files.txt
+        echo ']' >> benchmark-files.json
+        rm benchmark-files.txt
+        
+        # Commit changes
+        git add benchmark-results/ index.html benchmark-files.json
+        git commit -m "Update benchmark results - $(date +'%Y-%m-%d')"
+        git push origin gh-pages
+    
+    - name: Clean up
+      run: rm -rf BenchmarkResults
