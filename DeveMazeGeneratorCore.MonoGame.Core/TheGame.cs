@@ -40,7 +40,7 @@ namespace DeveMazeGeneratorMonoGame
 
         private Camera camera;
         private Basic3dExampleCamera newcamera;
-        
+
         // Mobile controls
         private MobileControls mobileControls;
 
@@ -201,7 +201,7 @@ namespace DeveMazeGeneratorMonoGame
             newcamera = new Basic3dExampleCamera(GraphicsDevice, this);
             newcamera.Position = new Vector3(7.5f, 7.5f, 7.5f);
             newcamera.LookAtDirection = Vector3.Forward;
-            
+
             // Initialize mobile controls
             mobileControls = new MobileControls(this);
 
@@ -260,7 +260,7 @@ namespace DeveMazeGeneratorMonoGame
             effect = new BasicEffect(GraphicsDevice);
 
             ContentDing.GoLoadContent(GraphicsDevice, Content);
-            
+
             // Initialize mobile controls
             mobileControls.Initialize(GraphicsDevice);
 
@@ -291,7 +291,7 @@ namespace DeveMazeGeneratorMonoGame
             ScreenHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
 
             camera.TriggerScreenSizeChanged();
-            
+
             // Update mobile UI positions when screen size changes
             if (mobileControls != null)
             {
@@ -306,7 +306,7 @@ namespace DeveMazeGeneratorMonoGame
                 Mouse.SetPosition(ScreenWidth / 2, ScreenHeight / 2);
             }
         }
-        
+
         /// <summary>
         /// Gets the current camera for external control
         /// </summary>
@@ -315,44 +315,44 @@ namespace DeveMazeGeneratorMonoGame
         {
             return UseNewCamera ? newcamera : null;
         }
-        
+
         #region Mobile UI Control Methods
-        
+
         /// <summary>
         /// Gets the current maze width
         /// </summary>
         public int MazeWidth => curMazeWidth;
-        
+
         /// <summary>
         /// Gets the current maze height
         /// </summary>
         public int MazeHeight => curMazeHeight;
-        
+
         /// <summary>
         /// Gets the current algorithm name
         /// </summary>
         public string CurrentAlgorithmName => algorithms[currentAlgorithm].GetType().Name;
-        
+
         /// <summary>
         /// Whether the roof is currently being drawn
         /// </summary>
         public bool DrawRoof => drawRoof;
-        
+
         /// <summary>
         /// Whether lighting is currently enabled
         /// </summary>
         public bool Lighting => lighting;
-        
+
         /// <summary>
         /// Whether the path is currently being drawn
         /// </summary>
         public bool DrawPath => drawPath;
-        
+
         /// <summary>
         /// Whether the UI is currently being shown
         /// </summary>
         public bool ShowUI => showUi;
-        
+
         /// <summary>
         /// Increase the maze size
         /// </summary>
@@ -363,7 +363,7 @@ namespace DeveMazeGeneratorMonoGame
             curMazeHeight *= 2;
             GenerateMaze();
         }
-        
+
         /// <summary>
         /// Decrease the maze size
         /// </summary>
@@ -381,7 +381,7 @@ namespace DeveMazeGeneratorMonoGame
                 GenerateMaze();
             }
         }
-        
+
         /// <summary>
         /// Switch to the previous algorithm
         /// </summary>
@@ -395,7 +395,7 @@ namespace DeveMazeGeneratorMonoGame
             numbertje = 0;
             GenerateMaze();
         }
-        
+
         /// <summary>
         /// Switch to the next algorithm
         /// </summary>
@@ -409,7 +409,7 @@ namespace DeveMazeGeneratorMonoGame
             numbertje = 0;
             GenerateMaze();
         }
-        
+
         /// <summary>
         /// Regenerate the maze with current settings
         /// </summary>
@@ -418,7 +418,7 @@ namespace DeveMazeGeneratorMonoGame
             numbertje = 0;
             GenerateMaze();
         }
-        
+
         /// <summary>
         /// Toggle roof visibility
         /// </summary>
@@ -426,7 +426,7 @@ namespace DeveMazeGeneratorMonoGame
         {
             drawRoof = !drawRoof;
         }
-        
+
         /// <summary>
         /// Toggle lighting
         /// </summary>
@@ -434,7 +434,7 @@ namespace DeveMazeGeneratorMonoGame
         {
             lighting = !lighting;
         }
-        
+
         /// <summary>
         /// Toggle path visibility
         /// </summary>
@@ -442,7 +442,7 @@ namespace DeveMazeGeneratorMonoGame
         {
             drawPath = !drawPath;
         }
-        
+
         /// <summary>
         /// Toggle UI visibility
         /// </summary>
@@ -450,7 +450,7 @@ namespace DeveMazeGeneratorMonoGame
         {
             showUi = !showUi;
         }
-        
+
         /// <summary>
         /// Increase animation speed
         /// </summary>
@@ -465,7 +465,7 @@ namespace DeveMazeGeneratorMonoGame
                 speedFactor = 1;
             }
         }
-        
+
         /// <summary>
         /// Decrease animation speed
         /// </summary>
@@ -474,24 +474,24 @@ namespace DeveMazeGeneratorMonoGame
             speedFactor = Math.Max(1, speedFactor / 2);
             numbertje = (numbertje - 1f) * 2f + 1f;
         }
-        
+
         #endregion
-        
+
         /// <summary>
         /// Toggle the NewCamera flag to enable the Basic3dExampleCamera
         /// </summary>
         public void ToggleNewCamera()
         {
             UseNewCamera = true;
-            
+
             // When enabling the new camera on mobile platforms, ensure the camera mode is set correctly
             if (Platform == Platform.Android || Platform == Platform.Blazor)
             {
                 Basic3dExampleCamera camera = GetCamera();
                 if (camera != null && mobileControls != null)
                 {
-                    camera.CameraUi(mobileControls.IsFpsMode ? 
-                        Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT : 
+                    camera.CameraUi(mobileControls.IsFpsMode ?
+                        Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT :
                         Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
                 }
             }
@@ -1008,17 +1008,11 @@ namespace DeveMazeGeneratorMonoGame
             }
 
 
-
+            mobileControls.Update(gameTime);
 
             if (UseNewCamera)
             {
                 newcamera.Update(gameTime);
-                
-                // Update mobile controls when using new camera
-                if (Platform == Platform.Android || Platform == Platform.Blazor)
-                {
-                    mobileControls.Update(gameTime);
-                }
             }
             else
             {
@@ -1346,12 +1340,8 @@ namespace DeveMazeGeneratorMonoGame
 
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-            
-            // Draw mobile controls on mobile platforms or Blazor
-            if ((Platform == Platform.Android || Platform == Platform.Blazor) && UseNewCamera)
-            {
-                mobileControls.Draw();
-            }
+
+            mobileControls.Draw();
 
             base.Draw(gameTime);
         }
