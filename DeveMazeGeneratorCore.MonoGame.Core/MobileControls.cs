@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
 using System;
 using System.Collections.Generic;
@@ -352,24 +353,24 @@ namespace DeveMazeGeneratorMonoGame
         /// </summary>
         public void Update(GameTime gameTime)
         {
-            if (!TouchPanel.IsGestureAvailable)
-                return;
-                
-            // Process touch input
-            TouchCollection touchCollection = TouchPanel.GetState();
-            
             // Reset button states
             foreach (var key in _pressedButtons.Keys)
             {
                 _pressedButtons[key] = false;
             }
             
+            // Process touch input
+            TouchCollection touchCollection = TouchPanel.GetState();
+            
             foreach (TouchLocation touch in touchCollection)
             {
                 ProcessTouch(touch, gameTime);
             }
             
-            if (touchCollection.Count == 0)
+            // Process mouse input
+            ProcessMouseInput(gameTime);
+            
+            if (touchCollection.Count == 0 && !_isMouseActive)
             {
                 _isLookControlActive = false;
             }
@@ -378,6 +379,68 @@ namespace DeveMazeGeneratorMonoGame
             if (ShowCameraControls)
             {
                 ApplyCameraMovement(gameTime);
+            }
+        }
+        
+        /// <summary>
+        /// Process mouse input for all controls
+        /// </summary>
+        private bool _isMouseActive = false;
+        private Vector2 _lastMousePosition;
+        
+        private void ProcessMouseInput(GameTime gameTime)
+        {
+            MouseState mouseState = Mouse.GetState();
+            Vector2 mousePosition = new Vector2(mouseState.X, mouseState.Y);
+            
+            // Toggle controls visibility
+            if (InputDing.TouchedOrMouseClickedInRect(_toggleControlsButtonRect))
+            {
+                ShowControls = !ShowControls;
+                return;
+            }
+            
+            if (!ShowControls)
+            {
+                return;
+            }
+            
+            // Main menu toggle
+            if (InputDing.TouchedOrMouseClickedInRect(_mainMenuButtonRect))
+            {
+                ToggleMainMenu();
+                return;
+            }
+            
+            // Handle menu selection buttons
+            if (InputDing.TouchedOrMouseClickedInRect(_cameraControlsButtonRect))
+            {
+                SetActiveControlGroup(ControlGroup.Camera);
+                return;
+            }
+            else if (InputDing.TouchedOrMouseClickedInRect(_mazeControlsButtonRect))
+            {
+                SetActiveControlGroup(ControlGroup.Maze);
+                return;
+            }
+            else if (InputDing.TouchedOrMouseClickedInRect(_viewControlsButtonRect))
+            {
+                SetActiveControlGroup(ControlGroup.View);
+                return;
+            }
+            
+            // Process group-specific controls based on active group
+            if (_activeControlGroup == ControlGroup.Camera && ShowCameraControls)
+            {
+                ProcessCameraControlsMouse(mouseState, gameTime, mousePosition);
+            }
+            else if (_activeControlGroup == ControlGroup.Maze && ShowMazeControls)
+            {
+                ProcessMazeControlsMouse(mousePosition, gameTime);
+            }
+            else if (_activeControlGroup == ControlGroup.View && ShowViewControls)
+            {
+                ProcessViewControlsMouse(mousePosition, gameTime);
             }
         }
         
@@ -444,6 +507,165 @@ namespace DeveMazeGeneratorMonoGame
             else if (_activeControlGroup == ControlGroup.View && ShowViewControls)
             {
                 ProcessViewControls(touch, position, gameTime);
+            }
+        }
+        
+        /// <summary>
+        /// Handle mouse events for camera controls
+        /// </summary>
+        private void ProcessCameraControlsMouse(MouseState mouseState, GameTime gameTime, Vector2 position)
+        {
+            // Handle button clicks for movement
+            _pressedButtons["Forward"] |= _forwardButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed;
+            _pressedButtons["Backward"] |= _backwardButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed;
+            _pressedButtons["Left"] |= _leftButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed;
+            _pressedButtons["Right"] |= _rightButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed;
+            _pressedButtons["Up"] |= _upButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed;
+            _pressedButtons["Down"] |= _downButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed;
+            
+            // Look control area
+            if (_lookControlRect.Contains(position))
+            {
+                if (mouseState.LeftButton == ButtonState.Pressed) 
+                {
+                    if (!_isMouseActive)
+                    {
+                        _isMouseActive = true;
+                        _lastMousePosition = position;
+                    }
+                    else
+                    {
+                        // Calculate delta from last position
+                        Vector2 delta = position - _lastMousePosition;
+                        
+                        // Apply rotation based on mouse movement
+                        Basic3dExampleCamera camera = _game.GetCamera();
+                        if (camera != null)
+                        {
+                            if (delta.X != 0)
+                                camera.RotateLeftOrRight(gameTime, -delta.X * 0.5f);
+                            
+                            if (delta.Y != 0)
+                                camera.RotateUpOrDown(gameTime, -delta.Y * 0.5f);
+                        }
+                        
+                        _lastMousePosition = position;
+                    }
+                }
+                else
+                {
+                    _isMouseActive = false;
+                }
+            }
+            
+            // Handle toggle button presses
+            if (InputDing.TouchedOrMouseClickedInRect(_toggleCameraModeButtonRect))
+            {
+                IsFpsMode = !IsFpsMode;
+                
+                // Update camera mode
+                Basic3dExampleCamera camera = _game.GetCamera();
+                if (camera != null)
+                {
+                    camera.CameraUi(IsFpsMode ? 
+                        Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT : 
+                        Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Handle mouse events for maze controls
+        /// </summary>
+        private void ProcessMazeControlsMouse(Vector2 position, GameTime gameTime)
+        {
+            // Check cooldown to prevent rapid button presses
+            TimeSpan currentTime = gameTime.TotalGameTime;
+            
+            // Increase maze size
+            if (InputDing.TouchedOrMouseClickedInRect(_increaseSizeButtonRect) && CheckActionCooldown("size", currentTime))
+            {
+                _game.IncreaseMazeSize();
+                _lastActionTime["size"] = currentTime;
+            }
+            
+            // Decrease maze size
+            else if (InputDing.TouchedOrMouseClickedInRect(_decreaseSizeButtonRect) && CheckActionCooldown("size", currentTime))
+            {
+                _game.DecreaseMazeSize();
+                _lastActionTime["size"] = currentTime;
+            }
+            
+            // Previous algorithm
+            else if (InputDing.TouchedOrMouseClickedInRect(_prevAlgorithmButtonRect) && CheckActionCooldown("alg", currentTime))
+            {
+                _game.PreviousAlgorithm();
+                _lastActionTime["alg"] = currentTime;
+            }
+            
+            // Next algorithm
+            else if (InputDing.TouchedOrMouseClickedInRect(_nextAlgorithmButtonRect) && CheckActionCooldown("alg", currentTime))
+            {
+                _game.NextAlgorithm();
+                _lastActionTime["alg"] = currentTime;
+            }
+            
+            // Regenerate maze
+            else if (InputDing.TouchedOrMouseClickedInRect(_regenerateMazeButtonRect) && CheckActionCooldown("regen", currentTime))
+            {
+                _game.RegenerateMaze();
+                _lastActionTime["regen"] = currentTime;
+            }
+        }
+        
+        /// <summary>
+        /// Handle mouse events for view controls
+        /// </summary>
+        private void ProcessViewControlsMouse(Vector2 position, GameTime gameTime)
+        {
+            // Check cooldown to prevent rapid button presses
+            TimeSpan currentTime = gameTime.TotalGameTime;
+            
+            // Toggle roof visibility
+            if (InputDing.TouchedOrMouseClickedInRect(_toggleRoofButtonRect) && CheckActionCooldown("roof", currentTime))
+            {
+                _game.ToggleRoof();
+                _lastActionTime["roof"] = currentTime;
+            }
+            
+            // Toggle lighting
+            else if (InputDing.TouchedOrMouseClickedInRect(_toggleLightingButtonRect) && CheckActionCooldown("light", currentTime))
+            {
+                _game.ToggleLighting();
+                _lastActionTime["light"] = currentTime;
+            }
+            
+            // Toggle path visibility
+            else if (InputDing.TouchedOrMouseClickedInRect(_togglePathButtonRect) && CheckActionCooldown("path", currentTime))
+            {
+                _game.TogglePath();
+                _lastActionTime["path"] = currentTime;
+            }
+            
+            // Toggle UI visibility
+            else if (InputDing.TouchedOrMouseClickedInRect(_toggleUiButtonRect) && CheckActionCooldown("ui", currentTime))
+            {
+                _game.ToggleUI();
+                _lastActionTime["ui"] = currentTime;
+            }
+            
+            // Increase speed
+            else if (InputDing.TouchedOrMouseClickedInRect(_increaseSpeedButtonRect) && CheckActionCooldown("speed", currentTime))
+            {
+                _game.IncreaseSpeed();
+                _lastActionTime["speed"] = currentTime;
+            }
+            
+            // Decrease speed
+            else if (InputDing.TouchedOrMouseClickedInRect(_decreaseSpeedButtonRect) && CheckActionCooldown("speed", currentTime))
+            {
+                _game.DecreaseSpeed();
+                _lastActionTime["speed"] = currentTime;
             }
         }
         
