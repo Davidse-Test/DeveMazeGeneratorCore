@@ -315,38 +315,20 @@ namespace DeveMazeGeneratorMonoGame
         {
             return UseNewCamera ? newcamera : null;
         }
-        
-        /// <summary>
-        /// Sets the camera mode based on ActiveCameraMode values (1-4)
-        /// </summary>
-        /// <param name="mode">Camera mode (1: Follow, 2: Free, 3: FromAbove, 4: Chase)</param>
-        public void SetCameraMode(int mode)
+
+        public ActiveCameraMode ActiveCameraMode => camera.ActiveCameraMode;
+
+        public void SetCameraMode(ActiveCameraMode newCameraMode)
         {
-            // Enable new camera if not already enabled
-            if (!UseNewCamera)
+            camera.ActiveCameraMode = newCameraMode;
+
+            if (newCameraMode == ActiveCameraMode.FromAboveCamera)
             {
-                UseNewCamera = true;
+                camera.leftrightRot = 0.15f;
+                camera.updownRot = -0.72f;
+                drawRoof = false;
             }
-            
-            // Set camera mode
-            switch (mode)
-            {
-                case 1: // FollowCamera
-                    camera.ActiveCameraMode = ActiveCameraMode.FollowCamera;
-                    break;
-                case 2: // FreeCamera
-                    camera.ActiveCameraMode = ActiveCameraMode.FreeCamera;
-                    break;
-                case 3: // FromAboveCamera
-                    camera.ActiveCameraMode = ActiveCameraMode.FromAboveCamera;
-                    camera.leftrightRot = 0.15f;
-                    camera.updownRot = -0.72f;
-                    drawRoof = false;
-                    break;
-                case 4: // ChaseCamera
-                    camera.ActiveCameraMode = ActiveCameraMode.ChaseCamera;
-                    break;
-            }
+
         }
 
         #region Mobile UI Control Methods
@@ -516,18 +498,6 @@ namespace DeveMazeGeneratorMonoGame
         public void ToggleNewCamera()
         {
             UseNewCamera = true;
-
-            // When enabling the new camera on mobile platforms, ensure the camera mode is set correctly
-            if (Platform == Platform.Android || Platform == Platform.Blazor)
-            {
-                Basic3dExampleCamera camera = GetCamera();
-                if (camera != null && mobileControls != null)
-                {
-                    camera.CameraUi(mobileControls.IsFpsMode ?
-                        Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT :
-                        Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
-                }
-            }
         }
 
         public void ToggleFullScreenBetter()
@@ -936,23 +906,19 @@ namespace DeveMazeGeneratorMonoGame
 
             if (InputDing.KeyDownUp(Keys.D1))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.FollowCamera;
+                SetCameraMode(ActiveCameraMode.FollowCamera);
             }
             else if (InputDing.KeyDownUp(Keys.D2))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.FreeCamera;
+                SetCameraMode(ActiveCameraMode.FreeCamera);
             }
             else if (InputDing.KeyDownUp(Keys.D3))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.FromAboveCamera;
-
-                camera.leftrightRot = 0.15f;
-                camera.updownRot = -0.72f;
-                drawRoof = false;
+                SetCameraMode(ActiveCameraMode.FromAboveCamera);
             }
             else if (InputDing.KeyDownUp(Keys.D4))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.ChaseCamera;
+                SetCameraMode(ActiveCameraMode.ChaseCamera);
             }
 
             if (InputDing.KeyDownUp(Keys.B))
