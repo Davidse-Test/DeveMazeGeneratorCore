@@ -3,9 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input.Touch;
 using System;
 using System.Collections.Generic;
-using DeveMazeGeneratorMonoGame;
+using DeveMazeGeneratorCore.MonoGame.Core;
 
-namespace DeveMazeGeneratorCore.MonoGame.Core
+namespace DeveMazeGeneratorMonoGame
 {
     /// <summary>
     /// Handles mobile UI controls for camera movement, maze settings, and view options
