@@ -41,6 +41,9 @@ namespace DeveMazeGeneratorMonoGame
         private Camera camera;
         private Basic3dExampleCamera newcamera;
 
+        // Mobile controls
+        private MobileControls mobileControls;
+
         private BasicEffect effect;
 
         //private VertexBuffer vertexBuffer;
@@ -172,6 +175,7 @@ namespace DeveMazeGeneratorMonoGame
             if (platform == Platform.Android)
             {
                 showUi = false;
+                UseNewCamera = true; // Enable the new camera by default on Android
             }
 
             //This is required for Blazor since it loads assets in a custom way
@@ -197,6 +201,9 @@ namespace DeveMazeGeneratorMonoGame
             newcamera = new Basic3dExampleCamera(GraphicsDevice, this);
             newcamera.Position = new Vector3(7.5f, 7.5f, 7.5f);
             newcamera.LookAtDirection = Vector3.Forward;
+
+            // Initialize mobile controls
+            mobileControls = new MobileControls(this);
 
             Window.ClientSizeChanged += Window_ClientSizeChanged;
             Window.OrientationChanged += Window_OrientationChanged;
@@ -254,6 +261,9 @@ namespace DeveMazeGeneratorMonoGame
 
             ContentDing.GoLoadContent(GraphicsDevice, Content);
 
+            // Initialize mobile controls
+            mobileControls.Initialize(GraphicsDevice);
+
             playerModel = new PlayerModel(this);
 
             skyboxModel = new CubeModelInvertedForSkybox(this, skyboxSize, skyboxSize, skyboxSize, TexturePosInfoGenerator.FullImage);
@@ -281,6 +291,12 @@ namespace DeveMazeGeneratorMonoGame
             ScreenHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
 
             camera.TriggerScreenSizeChanged();
+
+            // Update mobile UI positions when screen size changes
+            if (mobileControls != null)
+            {
+                mobileControls.UpdateControlPositions();
+            }
         }
 
         public void ResetMouseToCenter()
@@ -289,6 +305,199 @@ namespace DeveMazeGeneratorMonoGame
             {
                 Mouse.SetPosition(ScreenWidth / 2, ScreenHeight / 2);
             }
+        }
+
+        /// <summary>
+        /// Gets the current camera for external control
+        /// </summary>
+        /// <returns>The active camera instance</returns>
+        public Basic3dExampleCamera GetCamera()
+        {
+            return UseNewCamera ? newcamera : null;
+        }
+
+        public ActiveCameraMode ActiveCameraMode => camera.ActiveCameraMode;
+
+        public void SetCameraMode(ActiveCameraMode newCameraMode)
+        {
+            camera.ActiveCameraMode = newCameraMode;
+
+            if (newCameraMode == ActiveCameraMode.FromAboveCamera)
+            {
+                camera.leftrightRot = 0.15f;
+                camera.updownRot = -0.72f;
+                drawRoof = false;
+            }
+
+        }
+
+        #region Mobile UI Control Methods
+
+        /// <summary>
+        /// Gets the current maze width
+        /// </summary>
+        public int MazeWidth => curMazeWidth;
+
+        /// <summary>
+        /// Gets the current maze height
+        /// </summary>
+        public int MazeHeight => curMazeHeight;
+
+        /// <summary>
+        /// Gets the current algorithm name
+        /// </summary>
+        public string CurrentAlgorithmName => algorithms[currentAlgorithm].GetType().Name;
+
+        /// <summary>
+        /// Whether the roof is currently being drawn
+        /// </summary>
+        public bool DrawRoof => drawRoof;
+
+        /// <summary>
+        /// Whether lighting is currently enabled
+        /// </summary>
+        public bool Lighting => lighting;
+
+        /// <summary>
+        /// Whether the path is currently being drawn
+        /// </summary>
+        public bool DrawPath => drawPath;
+
+        /// <summary>
+        /// Whether the UI is currently being shown
+        /// </summary>
+        public bool ShowUI => showUi;
+
+        /// <summary>
+        /// Increase the maze size
+        /// </summary>
+        public void IncreaseMazeSize()
+        {
+            numbertje = 0;
+            curMazeWidth *= 2;
+            curMazeHeight *= 2;
+            GenerateMaze();
+        }
+
+        /// <summary>
+        /// Decrease the maze size
+        /// </summary>
+        public void DecreaseMazeSize()
+        {
+            if (curMazeWidth > 4 && curMazeHeight > 4)
+            {
+                numbertje = 0;
+                curMazeWidth /= 2;
+                curMazeHeight /= 2;
+                if (curMazeWidth < 1)
+                    curMazeWidth = 1;
+                if (curMazeHeight < 1)
+                    curMazeHeight = 1;
+                GenerateMaze();
+            }
+        }
+
+        /// <summary>
+        /// Switch to the previous algorithm
+        /// </summary>
+        public void PreviousAlgorithm()
+        {
+            currentAlgorithm--;
+            if (currentAlgorithm < 0)
+            {
+                currentAlgorithm = algorithms.Count - 1;
+            }
+            numbertje = 0;
+            GenerateMaze();
+        }
+
+        /// <summary>
+        /// Switch to the next algorithm
+        /// </summary>
+        public void NextAlgorithm()
+        {
+            currentAlgorithm++;
+            if (currentAlgorithm >= algorithms.Count)
+            {
+                currentAlgorithm = 0;
+            }
+            numbertje = 0;
+            GenerateMaze();
+        }
+
+        /// <summary>
+        /// Regenerate the maze with current settings
+        /// </summary>
+        public void RegenerateMaze()
+        {
+            numbertje = 0;
+            GenerateMaze();
+        }
+
+        /// <summary>
+        /// Toggle roof visibility
+        /// </summary>
+        public void ToggleRoof()
+        {
+            drawRoof = !drawRoof;
+        }
+
+        /// <summary>
+        /// Toggle lighting
+        /// </summary>
+        public void ToggleLighting()
+        {
+            lighting = !lighting;
+        }
+
+        /// <summary>
+        /// Toggle path visibility
+        /// </summary>
+        public void TogglePath()
+        {
+            drawPath = !drawPath;
+        }
+
+        /// <summary>
+        /// Toggle UI visibility
+        /// </summary>
+        public void ToggleUI()
+        {
+            showUi = !showUi;
+        }
+
+        /// <summary>
+        /// Increase animation speed
+        /// </summary>
+        public void IncreaseSpeed()
+        {
+            speedFactor *= 2;
+            numbertje = (numbertje - 1f) / 2f + 1f;
+
+            if (speedFactor <= 0)
+            {
+                numbertje = 0;
+                speedFactor = 1;
+            }
+        }
+
+        /// <summary>
+        /// Decrease animation speed
+        /// </summary>
+        public void DecreaseSpeed()
+        {
+            speedFactor = Math.Max(1, speedFactor / 2);
+            numbertje = (numbertje - 1f) * 2f + 1f;
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Toggle the NewCamera flag to enable the Basic3dExampleCamera
+        /// </summary>
+        public void ToggleNewCamera()
+        {
+            UseNewCamera = true;
         }
 
         public void ToggleFullScreenBetter()
@@ -697,23 +906,19 @@ namespace DeveMazeGeneratorMonoGame
 
             if (InputDing.KeyDownUp(Keys.D1))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.FollowCamera;
+                SetCameraMode(ActiveCameraMode.FollowCamera);
             }
             else if (InputDing.KeyDownUp(Keys.D2))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.FreeCamera;
+                SetCameraMode(ActiveCameraMode.FreeCamera);
             }
             else if (InputDing.KeyDownUp(Keys.D3))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.FromAboveCamera;
-
-                camera.leftrightRot = 0.15f;
-                camera.updownRot = -0.72f;
-                drawRoof = false;
+                SetCameraMode(ActiveCameraMode.FromAboveCamera);
             }
             else if (InputDing.KeyDownUp(Keys.D4))
             {
-                camera.ActiveCameraMode = ActiveCameraMode.ChaseCamera;
+                SetCameraMode(ActiveCameraMode.ChaseCamera);
             }
 
             if (InputDing.KeyDownUp(Keys.B))
@@ -802,7 +1007,7 @@ namespace DeveMazeGeneratorMonoGame
             }
 
 
-
+            mobileControls.Update(gameTime);
 
             if (UseNewCamera)
             {
@@ -1134,6 +1339,8 @@ namespace DeveMazeGeneratorMonoGame
 
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+            mobileControls.Draw();
 
             base.Draw(gameTime);
         }
