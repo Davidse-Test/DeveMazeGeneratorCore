@@ -20,36 +20,27 @@ namespace DeveMazeGeneratorMonoGame
         private Texture2D _buttonTexture;
         private Texture2D _iconTexture;
         
-        // Control group visibility
-        public bool ShowControls { get; private set; } = true;
-        public bool ShowCameraControls { get; private set; } = true;
-        public bool ShowMazeControls { get; private set; } = false;
-        public bool ShowViewControls { get; private set; } = false;
+        // Control visibility
+        public bool ShowControls { get; private set; } = false;
         
         // Camera mode
-        public bool IsFpsMode { get; private set; } = true;
+        public bool IsFpsMode => _currentCameraMode == CameraMode.FPS;
         
-        // Current control group
-        private enum ControlGroup
+        // Camera modes
+        private enum CameraMode
         {
-            Camera,
-            Maze,
-            View
+            FPS,
+            Edit
         }
-        private ControlGroup _activeControlGroup = ControlGroup.Camera;
+        private CameraMode _currentCameraMode = CameraMode.FPS;
         
         #region UI Rectangles
         
-        // Top menu buttons
-        private Rectangle _mainMenuButtonRect;
-        private Rectangle _toggleControlsButtonRect;
+        // Main hamburger button
+        private Rectangle _hamburgerButtonRect;
+        private Rectangle _debugUiButtonRect;
         
-        // Main menu buttons
-        private Rectangle _cameraControlsButtonRect;
-        private Rectangle _mazeControlsButtonRect;
-        private Rectangle _viewControlsButtonRect;
-        
-        // Camera controls
+        // Movement controls (always visible when ShowControls is true)
         private Rectangle _forwardButtonRect;
         private Rectangle _backwardButtonRect;
         private Rectangle _leftButtonRect;
@@ -57,7 +48,10 @@ namespace DeveMazeGeneratorMonoGame
         private Rectangle _upButtonRect;
         private Rectangle _downButtonRect;
         private Rectangle _lookControlRect;
-        private Rectangle _toggleCameraModeButtonRect;
+        
+        // Camera mode buttons
+        private Rectangle _fpsCameraModeButtonRect;
+        private Rectangle _editCameraModeButtonRect;
         
         // Maze controls
         private Rectangle _increaseSizeButtonRect;
@@ -65,18 +59,20 @@ namespace DeveMazeGeneratorMonoGame
         private Rectangle _prevAlgorithmButtonRect;
         private Rectangle _nextAlgorithmButtonRect;
         private Rectangle _regenerateMazeButtonRect;
-        private Rectangle _mazeSizeDisplayRect;
-        private Rectangle _algorithmDisplayRect;
         
         // View controls
         private Rectangle _toggleRoofButtonRect;
         private Rectangle _toggleLightingButtonRect;
         private Rectangle _togglePathButtonRect;
-        private Rectangle _toggleUiButtonRect;
         private Rectangle _increaseSpeedButtonRect;
         private Rectangle _decreaseSpeedButtonRect;
         
         #endregion
+        
+        // Control group panels
+        private Rectangle _cameraModesPanel;
+        private Rectangle _mazeControlsPanel;
+        private Rectangle _viewControlsPanel;
         
         // Button states for camera movement
         private Dictionary<string, bool> _pressedButtons = new Dictionary<string, bool>
@@ -92,6 +88,8 @@ namespace DeveMazeGeneratorMonoGame
         // Look control state
         private bool _isLookControlActive = false;
         private Vector2 _lastTouchPosition;
+        private bool _isMouseActive = false;
+        private Vector2 _lastMousePosition;
         
         // Action timestamps to prevent rapid pressing
         private Dictionary<string, TimeSpan> _lastActionTime = new Dictionary<string, TimeSpan>();
@@ -164,186 +162,162 @@ namespace DeveMazeGeneratorMonoGame
             int screenHeight = _game.ScreenHeight;
             
             // Sizing
-            int buttonSize = (int)(Math.Min(screenWidth, screenHeight) * 0.14f);
+            int buttonSize = (int)(Math.Min(screenWidth, screenHeight) * 0.13f);
             int smallButtonSize = (int)(buttonSize * 0.8f);
-            int menuButtonSize = (int)(buttonSize * 0.7f);
             int buttonMargin = buttonSize / 7;
-            int buttonRadius = buttonSize / 2;
             
-            // Top menu buttons
-            int topButtonWidth = (int)(screenWidth * 0.2f);
-            int topButtonHeight = (int)(screenHeight * 0.06f);
+            // Hamburger menu button (top left)
+            int hamburgerSize = (int)(buttonSize * 0.8f);
+            _hamburgerButtonRect = new Rectangle(
+                buttonMargin,
+                buttonMargin,
+                hamburgerSize, hamburgerSize);
+                
+            // Debug UI button (top right)
+            _debugUiButtonRect = new Rectangle(
+                screenWidth - hamburgerSize - buttonMargin,
+                buttonMargin,
+                hamburgerSize, hamburgerSize);
             
-            _mainMenuButtonRect = new Rectangle(
-                buttonMargin * 2,
-                buttonMargin * 2,
-                topButtonWidth, topButtonHeight);
-                
-            _toggleControlsButtonRect = new Rectangle(
-                screenWidth - topButtonWidth - buttonMargin * 2,
-                buttonMargin * 2,
-                topButtonWidth, topButtonHeight);
-                
-            // Main menu buttons (center top)
-            int menuButtonGap = menuButtonSize / 5;
-            int menuTotalWidth = menuButtonSize * 3 + menuButtonGap * 2;
-            int menuStartX = (screenWidth - menuTotalWidth) / 2;
-            int menuY = topButtonHeight + buttonMargin * 4;
+            #region Movement Controls
             
-            _cameraControlsButtonRect = new Rectangle(
-                menuStartX,
-                menuY,
-                menuButtonSize, menuButtonSize);
-                
-            _mazeControlsButtonRect = new Rectangle(
-                menuStartX + menuButtonSize + menuButtonGap,
-                menuY,
-                menuButtonSize, menuButtonSize);
-                
-            _viewControlsButtonRect = new Rectangle(
-                menuStartX + (menuButtonSize + menuButtonGap) * 2,
-                menuY,
-                menuButtonSize, menuButtonSize);
-                
-            #region Camera Controls
-            
-            // Movement buttons (bottom center)
-            int movementCenterX = screenWidth / 2;
+            // Movement buttons (bottom left, like a D-pad)
+            int movementCenterX = (int)(buttonSize * 1.5f) + buttonMargin * 3;
             int movementCenterY = screenHeight - buttonSize * 2;
             
             _forwardButtonRect = new Rectangle(
-                movementCenterX - buttonRadius, 
+                movementCenterX, 
                 movementCenterY - buttonSize - buttonMargin,
                 buttonSize, buttonSize);
                 
             _backwardButtonRect = new Rectangle(
-                movementCenterX - buttonRadius, 
+                movementCenterX, 
                 movementCenterY,
                 buttonSize, buttonSize);
                 
             _leftButtonRect = new Rectangle(
-                movementCenterX - buttonSize - buttonMargin - buttonRadius, 
+                movementCenterX - buttonSize - buttonMargin, 
                 movementCenterY,
                 buttonSize, buttonSize);
                 
             _rightButtonRect = new Rectangle(
-                movementCenterX + buttonMargin + buttonRadius, 
+                movementCenterX + buttonSize + buttonMargin, 
                 movementCenterY,
                 buttonSize, buttonSize);
                 
-            // Up/Down buttons (bottom left)
+            // Up/Down buttons (to the left of d-pad)
             _upButtonRect = new Rectangle(
-                buttonMargin * 2, 
+                buttonMargin, 
                 screenHeight - buttonSize * 2,
                 buttonSize, buttonSize);
                 
             _downButtonRect = new Rectangle(
-                buttonMargin * 2, 
+                buttonMargin, 
                 screenHeight - buttonSize,
                 buttonSize, buttonSize);
                 
             // Look control area (bottom right)
-            int lookControlSize = (int)(buttonSize * 1.5f);
+            int lookControlSize = (int)(buttonSize * 1.7f);
             _lookControlRect = new Rectangle(
-                screenWidth - lookControlSize - buttonMargin * 2,
-                screenHeight - lookControlSize - buttonMargin * 2,
+                screenWidth - lookControlSize - buttonMargin,
+                screenHeight - lookControlSize - buttonMargin,
                 lookControlSize, lookControlSize);
                 
-            // Camera mode toggle (bottom right, above look control)
-            _toggleCameraModeButtonRect = new Rectangle(
-                screenWidth - topButtonWidth - buttonMargin * 2,
-                screenHeight - lookControlSize - buttonMargin * 4 - topButtonHeight,
-                topButtonWidth, topButtonHeight);
-            
             #endregion
             
-            #region Maze Controls
+            #region Control Panels
             
-            // Size control buttons (center)
-            int mazeControlsY = menuY + menuButtonSize + buttonMargin * 4;
-            int mazeButtonWidth = (int)(buttonSize * 1.2f);
-            int mazeDisplayWidth = (int)(screenWidth * 0.4f);
+            // Calculate panel positions (centered when UI is shown)
+            int panelWidth = (int)(screenWidth * 0.9f);
+            int panelHeight = (int)(screenHeight * 0.5f);
+            int panelX = (screenWidth - panelWidth) / 2;
+            int panelY = (screenHeight - panelHeight) / 3;
             
-            _increaseSizeButtonRect = new Rectangle(
-                (screenWidth - mazeButtonWidth) / 2,
-                mazeControlsY,
-                mazeButtonWidth, smallButtonSize);
+            // Camera modes panel
+            _cameraModesPanel = new Rectangle(
+                panelX,
+                panelY,
+                panelWidth, smallButtonSize * 2 + buttonMargin * 3);
                 
-            _mazeSizeDisplayRect = new Rectangle(
-                (screenWidth - mazeDisplayWidth) / 2,
-                mazeControlsY + smallButtonSize + buttonMargin,
-                mazeDisplayWidth, smallButtonSize);
+            // Camera mode buttons
+            int cameraModeButtonWidth = (panelWidth - buttonMargin * 3) / 2;
+            _fpsCameraModeButtonRect = new Rectangle(
+                panelX + buttonMargin,
+                panelY + buttonMargin,
+                cameraModeButtonWidth, smallButtonSize);
                 
+            _editCameraModeButtonRect = new Rectangle(
+                panelX + cameraModeButtonWidth + buttonMargin * 2,
+                panelY + buttonMargin,
+                cameraModeButtonWidth, smallButtonSize);
+            
+            // Maze controls panel
+            _mazeControlsPanel = new Rectangle(
+                panelX,
+                panelY + _cameraModesPanel.Height + buttonMargin,
+                panelWidth, smallButtonSize * 2 + buttonMargin * 3);
+                
+            // Maze control buttons
+            int mazeButtonWidth = (panelWidth - buttonMargin * 6) / 5;
+            
             _decreaseSizeButtonRect = new Rectangle(
-                (screenWidth - mazeButtonWidth) / 2,
-                mazeControlsY + smallButtonSize * 2 + buttonMargin * 2,
+                panelX + buttonMargin,
+                panelY + _cameraModesPanel.Height + buttonMargin * 2,
                 mazeButtonWidth, smallButtonSize);
                 
-            // Algorithm control buttons
-            int algorithmControlsY = mazeControlsY + smallButtonSize * 3 + buttonMargin * 4;
-            
-            _prevAlgorithmButtonRect = new Rectangle(
-                screenWidth / 2 - mazeButtonWidth - buttonMargin,
-                algorithmControlsY,
-                smallButtonSize, smallButtonSize);
+            _increaseSizeButtonRect = new Rectangle(
+                panelX + mazeButtonWidth + buttonMargin * 2,
+                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                mazeButtonWidth, smallButtonSize);
                 
-            _algorithmDisplayRect = new Rectangle(
-                (screenWidth - mazeDisplayWidth) / 2,
-                algorithmControlsY + smallButtonSize + buttonMargin,
-                mazeDisplayWidth, smallButtonSize);
+            _prevAlgorithmButtonRect = new Rectangle(
+                panelX + mazeButtonWidth * 2 + buttonMargin * 3,
+                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                mazeButtonWidth, smallButtonSize);
                 
             _nextAlgorithmButtonRect = new Rectangle(
-                screenWidth / 2 + buttonMargin,
-                algorithmControlsY,
-                smallButtonSize, smallButtonSize);
-                
-            // Regenerate button
-            _regenerateMazeButtonRect = new Rectangle(
-                (screenWidth - mazeButtonWidth) / 2,
-                algorithmControlsY + smallButtonSize * 2 + buttonMargin * 2,
+                panelX + mazeButtonWidth * 3 + buttonMargin * 4,
+                panelY + _cameraModesPanel.Height + buttonMargin * 2,
                 mazeButtonWidth, smallButtonSize);
                 
-            #endregion
-            
-            #region View Controls
-            
-            // View control buttons arranged in a grid
-            int viewControlsStartY = menuY + menuButtonSize + buttonMargin * 4;
-            int viewButtonSize = smallButtonSize;
-            int viewGridX = (screenWidth - viewButtonSize * 2 - buttonMargin) / 2;
+            _regenerateMazeButtonRect = new Rectangle(
+                panelX + mazeButtonWidth * 4 + buttonMargin * 5,
+                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                mazeButtonWidth, smallButtonSize);
+                
+            // View controls panel
+            _viewControlsPanel = new Rectangle(
+                panelX,
+                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 2,
+                panelWidth, smallButtonSize * 2 + buttonMargin * 3);
+                
+            // View control buttons
+            int viewButtonWidth = (panelWidth - buttonMargin * 6) / 5;
             
             _toggleRoofButtonRect = new Rectangle(
-                viewGridX,
-                viewControlsStartY,
-                viewButtonSize, viewButtonSize);
+                panelX + buttonMargin,
+                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                viewButtonWidth, smallButtonSize);
                 
             _toggleLightingButtonRect = new Rectangle(
-                viewGridX + viewButtonSize + buttonMargin,
-                viewControlsStartY,
-                viewButtonSize, viewButtonSize);
+                panelX + viewButtonWidth + buttonMargin * 2,
+                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                viewButtonWidth, smallButtonSize);
                 
             _togglePathButtonRect = new Rectangle(
-                viewGridX,
-                viewControlsStartY + viewButtonSize + buttonMargin,
-                viewButtonSize, viewButtonSize);
-                
-            _toggleUiButtonRect = new Rectangle(
-                viewGridX + viewButtonSize + buttonMargin,
-                viewControlsStartY + viewButtonSize + buttonMargin,
-                viewButtonSize, viewButtonSize);
-                
-            // Speed controls
-            int speedControlsY = viewControlsStartY + viewButtonSize * 2 + buttonMargin * 3;
-            
-            _increaseSpeedButtonRect = new Rectangle(
-                viewGridX,
-                speedControlsY,
-                viewButtonSize, viewButtonSize);
+                panelX + viewButtonWidth * 2 + buttonMargin * 3,
+                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                viewButtonWidth, smallButtonSize);
                 
             _decreaseSpeedButtonRect = new Rectangle(
-                viewGridX + viewButtonSize + buttonMargin,
-                speedControlsY,
-                viewButtonSize, viewButtonSize);
+                panelX + viewButtonWidth * 3 + buttonMargin * 4,
+                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                viewButtonWidth, smallButtonSize);
+                
+            _increaseSpeedButtonRect = new Rectangle(
+                panelX + viewButtonWidth * 4 + buttonMargin * 5,
+                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                viewButtonWidth, smallButtonSize);
                 
             #endregion
         }
@@ -375,145 +349,62 @@ namespace DeveMazeGeneratorMonoGame
                 _isLookControlActive = false;
             }
             
-            // Apply camera movement if any button is pressed
-            if (ShowCameraControls)
-            {
-                ApplyCameraMovement(gameTime);
-            }
+            // Apply camera movement if any buttons are pressed
+            ApplyCameraMovement(gameTime);
         }
         
         /// <summary>
         /// Process mouse input for all controls
         /// </summary>
-        private bool _isMouseActive = false;
-        private Vector2 _lastMousePosition;
-        
         private void ProcessMouseInput(GameTime gameTime)
         {
             MouseState mouseState = Mouse.GetState();
             Vector2 mousePosition = new Vector2(mouseState.X, mouseState.Y);
             
-            // Toggle controls visibility
-            if (InputDing.TouchedOrMouseClickedInRect(_toggleControlsButtonRect))
+            // Hamburger menu button to toggle all controls
+            if (InputDing.TouchedOrMouseClickedInRect(_hamburgerButtonRect))
             {
                 ShowControls = !ShowControls;
                 return;
             }
             
+            // Debug UI button
+            if (InputDing.TouchedOrMouseClickedInRect(_debugUiButtonRect))
+            {
+                _game.ToggleUI();
+                return;
+            }
+            
+            // Movement buttons are always active
+            ProcessMovementControlsMouse(mouseState, gameTime, mousePosition);
+            
+            // If controls are hidden, don't process other UI
             if (!ShowControls)
+                return;
+            
+            // Process camera mode buttons
+            if (InputDing.TouchedOrMouseClickedInRect(_fpsCameraModeButtonRect))
             {
+                SetCameraMode(CameraMode.FPS);
+                return;
+            }
+            else if (InputDing.TouchedOrMouseClickedInRect(_editCameraModeButtonRect))
+            {
+                SetCameraMode(CameraMode.Edit);
                 return;
             }
             
-            // Main menu toggle
-            if (InputDing.TouchedOrMouseClickedInRect(_mainMenuButtonRect))
-            {
-                ToggleMainMenu();
-                return;
-            }
+            // Process maze control buttons
+            ProcessMazeControlsMouse(mousePosition, gameTime);
             
-            // Handle menu selection buttons
-            if (InputDing.TouchedOrMouseClickedInRect(_cameraControlsButtonRect))
-            {
-                SetActiveControlGroup(ControlGroup.Camera);
-                return;
-            }
-            else if (InputDing.TouchedOrMouseClickedInRect(_mazeControlsButtonRect))
-            {
-                SetActiveControlGroup(ControlGroup.Maze);
-                return;
-            }
-            else if (InputDing.TouchedOrMouseClickedInRect(_viewControlsButtonRect))
-            {
-                SetActiveControlGroup(ControlGroup.View);
-                return;
-            }
-            
-            // Process group-specific controls based on active group
-            if (_activeControlGroup == ControlGroup.Camera && ShowCameraControls)
-            {
-                ProcessCameraControlsMouse(mouseState, gameTime, mousePosition);
-            }
-            else if (_activeControlGroup == ControlGroup.Maze && ShowMazeControls)
-            {
-                ProcessMazeControlsMouse(mousePosition, gameTime);
-            }
-            else if (_activeControlGroup == ControlGroup.View && ShowViewControls)
-            {
-                ProcessViewControlsMouse(mousePosition, gameTime);
-            }
+            // Process view control buttons
+            ProcessViewControlsMouse(mousePosition, gameTime);
         }
         
         /// <summary>
-        /// Process an individual touch input
+        /// Process mouse input for movement controls
         /// </summary>
-        private void ProcessTouch(TouchLocation touch, GameTime gameTime)
-        {
-            if (!ShowControls)
-            {
-                // Handle the show controls button when controls are hidden
-                if (touch.State == TouchLocationState.Pressed && _toggleControlsButtonRect.Contains(touch.Position))
-                {
-                    ShowControls = true;
-                }
-                return;
-            }
-                
-            Vector2 position = touch.Position;
-            
-            // Handle top menu buttons
-            if (touch.State == TouchLocationState.Pressed)
-            {
-                if (_toggleControlsButtonRect.Contains(position))
-                {
-                    ShowControls = !ShowControls;
-                    return;
-                }
-                
-                if (_mainMenuButtonRect.Contains(position))
-                {
-                    // Toggle between showing and hiding the menu
-                    ToggleMainMenu();
-                    return;
-                }
-                
-                // Handle menu selection buttons
-                if (_cameraControlsButtonRect.Contains(position))
-                {
-                    SetActiveControlGroup(ControlGroup.Camera);
-                    return;
-                }
-                else if (_mazeControlsButtonRect.Contains(position))
-                {
-                    SetActiveControlGroup(ControlGroup.Maze);
-                    return;
-                }
-                else if (_viewControlsButtonRect.Contains(position))
-                {
-                    SetActiveControlGroup(ControlGroup.View);
-                    return;
-                }
-            }
-            
-            // Process controls based on active group
-            if (_activeControlGroup == ControlGroup.Camera && ShowCameraControls)
-            {
-                ProcessCameraControls(touch, gameTime, position);
-            }
-            else if (_activeControlGroup == ControlGroup.Maze && ShowMazeControls)
-            {
-                ProcessMazeControls(touch, position, gameTime);
-            }
-            else if (_activeControlGroup == ControlGroup.View && ShowViewControls)
-            {
-                ProcessViewControls(touch, position, gameTime);
-            }
-        }
-        
-        /// <summary>
-        /// Handle mouse events for camera controls
-        /// </summary>
-        private void ProcessCameraControlsMouse(MouseState mouseState, GameTime gameTime, Vector2 position)
+        private void ProcessMovementControlsMouse(MouseState mouseState, GameTime gameTime, Vector2 position)
         {
             // Handle button clicks for movement
             _pressedButtons["Forward"] |= _forwardButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed;
@@ -557,25 +448,10 @@ namespace DeveMazeGeneratorMonoGame
                     _isMouseActive = false;
                 }
             }
-            
-            // Handle toggle button presses
-            if (InputDing.TouchedOrMouseClickedInRect(_toggleCameraModeButtonRect))
-            {
-                IsFpsMode = !IsFpsMode;
-                
-                // Update camera mode
-                Basic3dExampleCamera camera = _game.GetCamera();
-                if (camera != null)
-                {
-                    camera.CameraUi(IsFpsMode ? 
-                        Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT : 
-                        Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
-                }
-            }
         }
         
         /// <summary>
-        /// Handle mouse events for maze controls
+        /// Process mouse events for maze controls
         /// </summary>
         private void ProcessMazeControlsMouse(Vector2 position, GameTime gameTime)
         {
@@ -619,7 +495,7 @@ namespace DeveMazeGeneratorMonoGame
         }
         
         /// <summary>
-        /// Handle mouse events for view controls
+        /// Process mouse events for view controls
         /// </summary>
         private void ProcessViewControlsMouse(Vector2 position, GameTime gameTime)
         {
@@ -647,13 +523,6 @@ namespace DeveMazeGeneratorMonoGame
                 _lastActionTime["path"] = currentTime;
             }
             
-            // Toggle UI visibility
-            else if (InputDing.TouchedOrMouseClickedInRect(_toggleUiButtonRect) && CheckActionCooldown("ui", currentTime))
-            {
-                _game.ToggleUI();
-                _lastActionTime["ui"] = currentTime;
-            }
-            
             // Increase speed
             else if (InputDing.TouchedOrMouseClickedInRect(_increaseSpeedButtonRect) && CheckActionCooldown("speed", currentTime))
             {
@@ -670,9 +539,59 @@ namespace DeveMazeGeneratorMonoGame
         }
         
         /// <summary>
-        /// Handle touch events for camera controls
+        /// Process an individual touch input
         /// </summary>
-        private void ProcessCameraControls(TouchLocation touch, GameTime gameTime, Vector2 position)
+        private void ProcessTouch(TouchLocation touch, GameTime gameTime)
+        {
+            Vector2 position = touch.Position;
+            
+            // Hamburger menu button to toggle all controls
+            if (touch.State == TouchLocationState.Pressed && _hamburgerButtonRect.Contains(position))
+            {
+                ShowControls = !ShowControls;
+                return;
+            }
+            
+            // Debug UI button
+            if (touch.State == TouchLocationState.Pressed && _debugUiButtonRect.Contains(position))
+            {
+                _game.ToggleUI();
+                return;
+            }
+            
+            // Movement buttons are always active
+            ProcessMovementTouch(touch, gameTime, position);
+            
+            // If controls are hidden, don't process other UI
+            if (!ShowControls)
+                return;
+            
+            // Process camera mode buttons
+            if (touch.State == TouchLocationState.Pressed)
+            {
+                if (_fpsCameraModeButtonRect.Contains(position))
+                {
+                    SetCameraMode(CameraMode.FPS);
+                    return;
+                }
+                else if (_editCameraModeButtonRect.Contains(position))
+                {
+                    SetCameraMode(CameraMode.Edit);
+                    return;
+                }
+                
+                // Process maze control buttons
+                ProcessMazeControls(touch, position, gameTime);
+                
+                // Process view control buttons
+                ProcessViewControls(touch, position, gameTime);
+            }
+        }
+        
+        /// <summary>
+        /// Process touch for movement controls
+        /// </summary>
+        private void ProcessMovementTouch(TouchLocation touch, GameTime gameTime, Vector2 position)
         {
             // Handle button touches for movement
             if ((touch.State == TouchLocationState.Pressed || touch.State == TouchLocationState.Moved))
@@ -717,21 +636,6 @@ namespace DeveMazeGeneratorMonoGame
                         
                         _lastTouchPosition = position;
                     }
-                }
-            }
-            
-            // Handle toggle button presses
-            if (touch.State == TouchLocationState.Pressed && _toggleCameraModeButtonRect.Contains(position))
-            {
-                IsFpsMode = !IsFpsMode;
-                
-                // Update camera mode
-                Basic3dExampleCamera camera = _game.GetCamera();
-                if (camera != null)
-                {
-                    camera.CameraUi(IsFpsMode ? 
-                        Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT : 
-                        Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
                 }
             }
             
@@ -821,13 +725,6 @@ namespace DeveMazeGeneratorMonoGame
                 _lastActionTime["path"] = currentTime;
             }
             
-            // Toggle UI visibility
-            else if (_toggleUiButtonRect.Contains(position) && CheckActionCooldown("ui", currentTime))
-            {
-                _game.ToggleUI();
-                _lastActionTime["ui"] = currentTime;
-            }
-            
             // Increase speed
             else if (_increaseSpeedButtonRect.Contains(position) && CheckActionCooldown("speed", currentTime))
             {
@@ -857,50 +754,25 @@ namespace DeveMazeGeneratorMonoGame
         }
         
         /// <summary>
-        /// Toggle the display of the main menu
+        /// Set camera mode and update camera settings
         /// </summary>
-        private void ToggleMainMenu()
+        private void SetCameraMode(CameraMode mode)
         {
-            bool allHidden = !ShowCameraControls && !ShowMazeControls && !ShowViewControls;
+            _currentCameraMode = mode;
             
-            if (allHidden)
+            // Update camera mode
+            Basic3dExampleCamera camera = _game.GetCamera();
+            if (camera != null)
             {
-                // If all are hidden, show the last active one
-                SetActiveControlGroup(_activeControlGroup);
-            }
-            else
-            {
-                // Hide all control groups
-                ShowCameraControls = false;
-                ShowMazeControls = false;
-                ShowViewControls = false;
-            }
-        }
-        
-        /// <summary>
-        /// Set the active control group and update visibility
-        /// </summary>
-        private void SetActiveControlGroup(ControlGroup group)
-        {
-            _activeControlGroup = group;
-            
-            // Hide all control groups first
-            ShowCameraControls = false;
-            ShowMazeControls = false;
-            ShowViewControls = false;
-            
-            // Show only the active group
-            switch (group)
-            {
-                case ControlGroup.Camera:
-                    ShowCameraControls = true;
-                    break;
-                case ControlGroup.Maze:
-                    ShowMazeControls = true;
-                    break;
-                case ControlGroup.View:
-                    ShowViewControls = true;
-                    break;
+                switch (mode)
+                {
+                    case CameraMode.FPS:
+                        camera.CameraUi(Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT);
+                        break;
+                    case CameraMode.Edit:
+                        camera.CameraUi(Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
+                        break;
+                }
             }
         }
         
@@ -935,43 +807,55 @@ namespace DeveMazeGeneratorMonoGame
         {
             _spriteBatch.Begin();
             
-            // Always draw the top menu buttons
-            DrawButton(_toggleControlsButtonRect, Color.Black * 0.6f, ShowControls ? "Hide Controls" : "Show Controls", Color.White);
+            // Always draw the hamburger and debug buttons
+            DrawButton(_hamburgerButtonRect, Color.Black * 0.7f, "≡", Color.White);
+            DrawButton(_debugUiButtonRect, Color.DarkSlateGray * 0.8f, "⚙", Color.White);
             
-            if (!ShowControls)
+            // Always draw movement controls
+            DrawMovementControls();
+            
+            // Draw additional UI panels if controls are visible
+            if (ShowControls)
             {
-                _spriteBatch.End();
-                return;
-            }
-            
-            DrawButton(_mainMenuButtonRect, Color.Black * 0.6f, "Menu", Color.White);
-            
-            // Draw menu selection buttons
-            Color cameraColor = ShowCameraControls ? Color.DarkGreen * 0.8f : Color.DarkSlateGray * 0.7f;
-            Color mazeColor = ShowMazeControls ? Color.DarkBlue * 0.8f : Color.DarkSlateGray * 0.7f;
-            Color viewColor = ShowViewControls ? Color.DarkRed * 0.8f : Color.DarkSlateGray * 0.7f;
-            
-            DrawButton(_cameraControlsButtonRect, cameraColor, "Camera", Color.White);
-            DrawButton(_mazeControlsButtonRect, mazeColor, "Maze", Color.White);
-            DrawButton(_viewControlsButtonRect, viewColor, "View", Color.White);
-            
-            // Draw specific control groups
-            if (ShowCameraControls)
-                DrawCameraControls();
+                DrawPanel(_cameraModesPanel, Color.Black * 0.5f);
+                DrawCameraModeButtons();
                 
-            if (ShowMazeControls)
+                DrawPanel(_mazeControlsPanel, Color.Black * 0.5f);
                 DrawMazeControls();
                 
-            if (ShowViewControls)
+                DrawPanel(_viewControlsPanel, Color.Black * 0.5f);
                 DrawViewControls();
+            }
             
             _spriteBatch.End();
         }
         
         /// <summary>
-        /// Draw camera control buttons
+        /// Draw a panel with background
         /// </summary>
-        private void DrawCameraControls()
+        private void DrawPanel(Rectangle rect, Color color)
+        {
+            _spriteBatch.Draw(_buttonTexture, rect, color);
+            
+            // Draw border
+            int thickness = 2;
+            Rectangle borderRect = new Rectangle(rect.X, rect.Y, rect.Width, thickness);
+            _spriteBatch.Draw(_buttonTexture, borderRect, Color.White * 0.6f); // Top
+            
+            borderRect.Y = rect.Y + rect.Height - thickness;
+            _spriteBatch.Draw(_buttonTexture, borderRect, Color.White * 0.6f); // Bottom
+            
+            borderRect = new Rectangle(rect.X, rect.Y, thickness, rect.Height);
+            _spriteBatch.Draw(_buttonTexture, borderRect, Color.White * 0.6f); // Left
+            
+            borderRect.X = rect.X + rect.Width - thickness;
+            _spriteBatch.Draw(_buttonTexture, borderRect, Color.White * 0.6f); // Right
+        }
+        
+        /// <summary>
+        /// Draw movement control buttons
+        /// </summary>
+        private void DrawMovementControls()
         {
             // Draw movement buttons
             DrawButton(_forwardButtonRect, Color.Black * 0.6f, "▲", Color.White);
@@ -985,9 +869,18 @@ namespace DeveMazeGeneratorMonoGame
             
             // Draw look control area
             DrawButton(_lookControlRect, Color.Black * 0.5f, "Look", Color.White);
+        }
+        
+        /// <summary>
+        /// Draw camera mode buttons
+        /// </summary>
+        private void DrawCameraModeButtons()
+        {
+            Color fpsColor = _currentCameraMode == CameraMode.FPS ? Color.Green * 0.7f : Color.DarkSlateGray * 0.7f;
+            Color editColor = _currentCameraMode == CameraMode.Edit ? Color.Green * 0.7f : Color.DarkSlateGray * 0.7f;
             
-            // Draw camera mode toggle
-            DrawButton(_toggleCameraModeButtonRect, Color.Black * 0.6f, IsFpsMode ? "FPS Mode" : "Edit Mode", Color.White);
+            DrawButton(_fpsCameraModeButtonRect, fpsColor, "FPS", Color.White);
+            DrawButton(_editCameraModeButtonRect, editColor, "Edit", Color.White); 
         }
         
         /// <summary>
@@ -995,18 +888,11 @@ namespace DeveMazeGeneratorMonoGame
         /// </summary>
         private void DrawMazeControls()
         {
-            // Draw size controls
-            DrawButton(_increaseSizeButtonRect, Color.DarkBlue * 0.7f, "Size +", Color.White);
-            DrawButton(_mazeSizeDisplayRect, Color.Black * 0.5f, $"Size: {_game.MazeWidth}x{_game.MazeHeight}", Color.White);
-            DrawButton(_decreaseSizeButtonRect, Color.DarkBlue * 0.7f, "Size -", Color.White);
-            
-            // Draw algorithm controls
-            DrawButton(_prevAlgorithmButtonRect, Color.DarkGreen * 0.7f, "◄", Color.White);
-            DrawButton(_algorithmDisplayRect, Color.Black * 0.5f, $"Alg: {_game.CurrentAlgorithmName}", Color.White);
-            DrawButton(_nextAlgorithmButtonRect, Color.DarkGreen * 0.7f, "►", Color.White);
-            
-            // Draw regenerate button
-            DrawButton(_regenerateMazeButtonRect, Color.DarkRed * 0.7f, "Regenerate", Color.White);
+            DrawButton(_decreaseSizeButtonRect, Color.DarkBlue * 0.7f, "Size-", Color.White);
+            DrawButton(_increaseSizeButtonRect, Color.DarkBlue * 0.7f, "Size+", Color.White);
+            DrawButton(_prevAlgorithmButtonRect, Color.DarkGreen * 0.7f, "Alg◄", Color.White);
+            DrawButton(_nextAlgorithmButtonRect, Color.DarkGreen * 0.7f, "Alg►", Color.White);
+            DrawButton(_regenerateMazeButtonRect, Color.DarkRed * 0.7f, "Regen", Color.White);
         }
         
         /// <summary>
@@ -1018,16 +904,14 @@ namespace DeveMazeGeneratorMonoGame
             Color roofColor = _game.DrawRoof ? Color.Green * 0.7f : Color.DarkRed * 0.7f;
             Color lightingColor = _game.Lighting ? Color.Green * 0.7f : Color.DarkRed * 0.7f;
             Color pathColor = _game.DrawPath ? Color.Green * 0.7f : Color.DarkRed * 0.7f;
-            Color uiColor = _game.ShowUI ? Color.Green * 0.7f : Color.DarkRed * 0.7f;
             
             DrawButton(_toggleRoofButtonRect, roofColor, "Roof", Color.White);
             DrawButton(_toggleLightingButtonRect, lightingColor, "Light", Color.White);
             DrawButton(_togglePathButtonRect, pathColor, "Path", Color.White);
-            DrawButton(_toggleUiButtonRect, uiColor, "UI", Color.White);
             
             // Draw speed controls
-            DrawButton(_increaseSpeedButtonRect, Color.DarkBlue * 0.7f, "Speed+", Color.White);
-            DrawButton(_decreaseSpeedButtonRect, Color.DarkBlue * 0.7f, "Speed-", Color.White);
+            DrawButton(_decreaseSpeedButtonRect, Color.DarkBlue * 0.7f, "Spd-", Color.White);
+            DrawButton(_increaseSpeedButtonRect, Color.DarkBlue * 0.7f, "Spd+", Color.White);
         }
         
         /// <summary>
