@@ -30,7 +30,8 @@ namespace DeveMazeGeneratorMonoGame
         private enum CameraMode
         {
             FPS,
-            Edit
+            Edit,
+            FromAbove
         }
         private CameraMode _currentCameraMode = CameraMode.FPS;
         
@@ -52,6 +53,13 @@ namespace DeveMazeGeneratorMonoGame
         // Camera mode buttons
         private Rectangle _fpsCameraModeButtonRect;
         private Rectangle _editCameraModeButtonRect;
+        private Rectangle _fromAboveCameraModeButtonRect;
+        
+        // Camera rotation controls
+        private Rectangle _rotateCameraUpButtonRect;
+        private Rectangle _rotateCameraDownButtonRect;
+        private Rectangle _rotateCameraLeftButtonRect;
+        private Rectangle _rotateCameraRightButtonRect;
         
         // Maze controls
         private Rectangle _increaseSizeButtonRect;
@@ -223,6 +231,52 @@ namespace DeveMazeGeneratorMonoGame
                 screenHeight - lookControlSize - buttonMargin,
                 lookControlSize, lookControlSize);
                 
+            // Camera rotation buttons (right side, above look control)
+            int rotationButtonY = screenHeight - lookControlSize - buttonMargin * 2 - buttonSize * 2;
+            int rotationCenterX = screenWidth - buttonSize - buttonMargin - buttonSize/2;
+            
+            _rotateCameraUpButtonRect = new Rectangle(
+                rotationCenterX, 
+                rotationButtonY - buttonSize - buttonMargin,
+                buttonSize, buttonSize);
+                
+            _rotateCameraDownButtonRect = new Rectangle(
+                rotationCenterX, 
+                rotationButtonY,
+                buttonSize, buttonSize);
+                
+            _rotateCameraLeftButtonRect = new Rectangle(
+                rotationCenterX - buttonSize - buttonMargin, 
+                rotationButtonY,
+                buttonSize, buttonSize);
+                
+            _rotateCameraRightButtonRect = new Rectangle(
+                rotationCenterX + buttonSize + buttonMargin, 
+                rotationButtonY,
+                buttonSize, buttonSize);
+            
+            // Camera mode buttons (top of screen, center)
+            int cameraModeButtonY = buttonMargin * 2;
+            int cameraModeButtonWidth = buttonSize * 3;
+            int cameraModeSpacing = buttonMargin * 2;
+            int totalCameraModeWidth = cameraModeButtonWidth * 3 + cameraModeSpacing * 2;
+            int cameraModeStartX = (screenWidth - totalCameraModeWidth) / 2;
+            
+            _fpsCameraModeButtonRect = new Rectangle(
+                cameraModeStartX,
+                cameraModeButtonY,
+                cameraModeButtonWidth, buttonSize);
+                
+            _editCameraModeButtonRect = new Rectangle(
+                cameraModeStartX + cameraModeButtonWidth + cameraModeSpacing,
+                cameraModeButtonY,
+                cameraModeButtonWidth, buttonSize);
+                
+            _fromAboveCameraModeButtonRect = new Rectangle(
+                cameraModeStartX + (cameraModeButtonWidth + cameraModeSpacing) * 2,
+                cameraModeButtonY,
+                cameraModeButtonWidth, buttonSize);
+                
             #endregion
             
             #region Control Panels
@@ -233,28 +287,13 @@ namespace DeveMazeGeneratorMonoGame
             int panelX = (screenWidth - panelWidth) / 2;
             int panelY = (screenHeight - panelHeight) / 3;
             
-            // Camera modes panel
-            _cameraModesPanel = new Rectangle(
-                panelX,
-                panelY,
-                panelWidth, smallButtonSize * 2 + buttonMargin * 3);
-                
-            // Camera mode buttons
-            int cameraModeButtonWidth = (panelWidth - buttonMargin * 3) / 2;
-            _fpsCameraModeButtonRect = new Rectangle(
-                panelX + buttonMargin,
-                panelY + buttonMargin,
-                cameraModeButtonWidth, smallButtonSize);
-                
-            _editCameraModeButtonRect = new Rectangle(
-                panelX + cameraModeButtonWidth + buttonMargin * 2,
-                panelY + buttonMargin,
-                cameraModeButtonWidth, smallButtonSize);
+            // Camera modes panel - no longer needed as buttons are now always visible
+            _cameraModesPanel = new Rectangle(0, 0, 0, 0);
             
             // Maze controls panel
             _mazeControlsPanel = new Rectangle(
                 panelX,
-                panelY + _cameraModesPanel.Height + buttonMargin,
+                panelY,
                 panelWidth, smallButtonSize * 2 + buttonMargin * 3);
                 
             // Maze control buttons
@@ -262,33 +301,33 @@ namespace DeveMazeGeneratorMonoGame
             
             _decreaseSizeButtonRect = new Rectangle(
                 panelX + buttonMargin,
-                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                panelY + buttonMargin,
                 mazeButtonWidth, smallButtonSize);
                 
             _increaseSizeButtonRect = new Rectangle(
                 panelX + mazeButtonWidth + buttonMargin * 2,
-                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                panelY + buttonMargin,
                 mazeButtonWidth, smallButtonSize);
                 
             _prevAlgorithmButtonRect = new Rectangle(
                 panelX + mazeButtonWidth * 2 + buttonMargin * 3,
-                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                panelY + buttonMargin,
                 mazeButtonWidth, smallButtonSize);
                 
             _nextAlgorithmButtonRect = new Rectangle(
                 panelX + mazeButtonWidth * 3 + buttonMargin * 4,
-                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                panelY + buttonMargin,
                 mazeButtonWidth, smallButtonSize);
                 
             _regenerateMazeButtonRect = new Rectangle(
                 panelX + mazeButtonWidth * 4 + buttonMargin * 5,
-                panelY + _cameraModesPanel.Height + buttonMargin * 2,
+                panelY + buttonMargin,
                 mazeButtonWidth, smallButtonSize);
                 
             // View controls panel
             _viewControlsPanel = new Rectangle(
                 panelX,
-                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 2,
+                panelY + _mazeControlsPanel.Height + buttonMargin,
                 panelWidth, smallButtonSize * 2 + buttonMargin * 3);
                 
             // View control buttons
@@ -296,27 +335,27 @@ namespace DeveMazeGeneratorMonoGame
             
             _toggleRoofButtonRect = new Rectangle(
                 panelX + buttonMargin,
-                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                panelY + _mazeControlsPanel.Height + buttonMargin * 2,
                 viewButtonWidth, smallButtonSize);
                 
             _toggleLightingButtonRect = new Rectangle(
                 panelX + viewButtonWidth + buttonMargin * 2,
-                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                panelY + _mazeControlsPanel.Height + buttonMargin * 2,
                 viewButtonWidth, smallButtonSize);
                 
             _togglePathButtonRect = new Rectangle(
                 panelX + viewButtonWidth * 2 + buttonMargin * 3,
-                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                panelY + _mazeControlsPanel.Height + buttonMargin * 2,
                 viewButtonWidth, smallButtonSize);
                 
             _decreaseSpeedButtonRect = new Rectangle(
                 panelX + viewButtonWidth * 3 + buttonMargin * 4,
-                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                panelY + _mazeControlsPanel.Height + buttonMargin * 2,
                 viewButtonWidth, smallButtonSize);
                 
             _increaseSpeedButtonRect = new Rectangle(
                 panelX + viewButtonWidth * 4 + buttonMargin * 5,
-                panelY + _cameraModesPanel.Height + _mazeControlsPanel.Height + buttonMargin * 3,
+                panelY + _mazeControlsPanel.Height + buttonMargin * 2,
                 viewButtonWidth, smallButtonSize);
                 
             #endregion
@@ -375,14 +414,7 @@ namespace DeveMazeGeneratorMonoGame
                 return;
             }
             
-            // Movement buttons are always active
-            ProcessMovementControlsMouse(mouseState, gameTime, mousePosition);
-            
-            // If controls are hidden, don't process other UI
-            if (!ShowControls)
-                return;
-            
-            // Process camera mode buttons
+            // Process camera mode buttons (always visible)
             if (InputDing.TouchedOrMouseClickedInRect(_fpsCameraModeButtonRect))
             {
                 SetCameraMode(CameraMode.FPS);
@@ -393,6 +425,21 @@ namespace DeveMazeGeneratorMonoGame
                 SetCameraMode(CameraMode.Edit);
                 return;
             }
+            else if (InputDing.TouchedOrMouseClickedInRect(_fromAboveCameraModeButtonRect))
+            {
+                SetCameraMode(CameraMode.FromAbove);
+                return;
+            }
+            
+            // Movement buttons are always active
+            ProcessMovementControlsMouse(mouseState, gameTime, mousePosition);
+            
+            // Camera rotation buttons are always active
+            ProcessCameraRotationMouse(mouseState, gameTime, mousePosition);
+            
+            // If controls are hidden, don't process other UI
+            if (!ShowControls)
+                return;
             
             // Process maze control buttons
             ProcessMazeControlsMouse(mousePosition, gameTime);
@@ -447,6 +494,40 @@ namespace DeveMazeGeneratorMonoGame
                 {
                     _isMouseActive = false;
                 }
+            }
+        }
+        
+        /// <summary>
+        /// Process mouse input for camera rotation controls
+        /// </summary>
+        private void ProcessCameraRotationMouse(MouseState mouseState, GameTime gameTime, Vector2 position)
+        {
+            Basic3dExampleCamera camera = _game.GetCamera();
+            if (camera == null)
+                return;
+                
+            // Camera rotation up
+            if (_rotateCameraUpButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed)
+            {
+                camera.RotateUp(gameTime);
+            }
+            
+            // Camera rotation down
+            if (_rotateCameraDownButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed)
+            {
+                camera.RotateDown(gameTime);
+            }
+            
+            // Camera rotation left
+            if (_rotateCameraLeftButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed)
+            {
+                camera.RotateLeft(gameTime);
+            }
+            
+            // Camera rotation right
+            if (_rotateCameraRightButtonRect.Contains(position) && mouseState.LeftButton == ButtonState.Pressed)
+            {
+                camera.RotateRight(gameTime);
             }
         }
         
@@ -559,14 +640,7 @@ namespace DeveMazeGeneratorMonoGame
                 return;
             }
             
-            // Movement buttons are always active
-            ProcessMovementTouch(touch, gameTime, position);
-            
-            // If controls are hidden, don't process other UI
-            if (!ShowControls)
-                return;
-            
-            // Process camera mode buttons
+            // Process camera mode buttons (always visible)
             if (touch.State == TouchLocationState.Pressed)
             {
                 if (_fpsCameraModeButtonRect.Contains(position))
@@ -579,7 +653,26 @@ namespace DeveMazeGeneratorMonoGame
                     SetCameraMode(CameraMode.Edit);
                     return;
                 }
-                
+                else if (_fromAboveCameraModeButtonRect.Contains(position))
+                {
+                    SetCameraMode(CameraMode.FromAbove);
+                    return;
+                }
+            }
+            
+            // Movement buttons are always active
+            ProcessMovementTouch(touch, gameTime, position);
+            
+            // Camera rotation buttons are always active
+            ProcessCameraRotationTouch(touch, gameTime, position);
+            
+            // If controls are hidden, don't process other UI
+            if (!ShowControls)
+                return;
+            
+            // Process maze control buttons
+            if (touch.State == TouchLocationState.Pressed)
+            {
                 // Process maze control buttons
                 ProcessMazeControls(touch, position, gameTime);
                 
@@ -643,6 +736,43 @@ namespace DeveMazeGeneratorMonoGame
             if (touch.State == TouchLocationState.Released && _lookControlRect.Contains(position))
             {
                 _isLookControlActive = false;
+            }
+        }
+        
+        /// <summary>
+        /// Process touch for camera rotation controls
+        /// </summary>
+        private void ProcessCameraRotationTouch(TouchLocation touch, GameTime gameTime, Vector2 position)
+        {
+            Basic3dExampleCamera camera = _game.GetCamera();
+            if (camera == null)
+                return;
+                
+            if (touch.State == TouchLocationState.Pressed || touch.State == TouchLocationState.Moved)
+            {
+                // Camera rotation up
+                if (_rotateCameraUpButtonRect.Contains(position))
+                {
+                    camera.RotateUp(gameTime);
+                }
+                
+                // Camera rotation down
+                else if (_rotateCameraDownButtonRect.Contains(position))
+                {
+                    camera.RotateDown(gameTime);
+                }
+                
+                // Camera rotation left
+                else if (_rotateCameraLeftButtonRect.Contains(position))
+                {
+                    camera.RotateLeft(gameTime);
+                }
+                
+                // Camera rotation right
+                else if (_rotateCameraRightButtonRect.Contains(position))
+                {
+                    camera.RotateRight(gameTime);
+                }
             }
         }
         
@@ -761,16 +891,19 @@ namespace DeveMazeGeneratorMonoGame
             _currentCameraMode = mode;
             
             // Update camera mode
-            Basic3dExampleCamera camera = _game.GetCamera();
-            if (camera != null)
+            if (_game.GetCamera() != null)
             {
                 switch (mode)
                 {
                     case CameraMode.FPS:
-                        camera.CameraUi(Basic3dExampleCamera.CAM_UI_OPTION_FPS_LAYOUT);
+                        _game.SetCameraMode(1); // FollowCamera
                         break;
                     case CameraMode.Edit:
-                        camera.CameraUi(Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
+                        _game.SetCameraMode(2); // FreeCamera with Edit layout
+                        _game.GetCamera().CameraUi(Basic3dExampleCamera.CAM_UI_OPTION_EDIT_LAYOUT);
+                        break;
+                    case CameraMode.FromAbove:
+                        _game.SetCameraMode(3); // FromAboveCamera
                         break;
                 }
             }
@@ -811,15 +944,18 @@ namespace DeveMazeGeneratorMonoGame
             DrawButton(_hamburgerButtonRect, Color.Black * 0.7f, "≡", Color.White);
             DrawButton(_debugUiButtonRect, Color.DarkSlateGray * 0.8f, "⚙", Color.White);
             
+            // Always draw camera mode buttons at the top
+            DrawCameraModeButtons();
+            
             // Always draw movement controls
             DrawMovementControls();
+            
+            // Always draw camera rotation controls
+            DrawCameraRotationControls();
             
             // Draw additional UI panels if controls are visible
             if (ShowControls)
             {
-                DrawPanel(_cameraModesPanel, Color.Black * 0.5f);
-                DrawCameraModeButtons();
-                
                 DrawPanel(_mazeControlsPanel, Color.Black * 0.5f);
                 DrawMazeControls();
                 
@@ -864,8 +1000,8 @@ namespace DeveMazeGeneratorMonoGame
             DrawButton(_rightButtonRect, Color.Black * 0.6f, "►", Color.White);
             
             // Draw up/down buttons
-            DrawButton(_upButtonRect, Color.Black * 0.6f, "Q", Color.White);
-            DrawButton(_downButtonRect, Color.Black * 0.6f, "E", Color.White);
+            DrawButton(_upButtonRect, Color.Black * 0.6f, "Q/Up", Color.White);
+            DrawButton(_downButtonRect, Color.Black * 0.6f, "E/Down", Color.White);
             
             // Draw look control area
             DrawButton(_lookControlRect, Color.Black * 0.5f, "Look", Color.White);
@@ -878,9 +1014,23 @@ namespace DeveMazeGeneratorMonoGame
         {
             Color fpsColor = _currentCameraMode == CameraMode.FPS ? Color.Green * 0.7f : Color.DarkSlateGray * 0.7f;
             Color editColor = _currentCameraMode == CameraMode.Edit ? Color.Green * 0.7f : Color.DarkSlateGray * 0.7f;
+            Color fromAboveColor = _currentCameraMode == CameraMode.FromAbove ? Color.Green * 0.7f : Color.DarkSlateGray * 0.7f;
             
-            DrawButton(_fpsCameraModeButtonRect, fpsColor, "FPS", Color.White);
-            DrawButton(_editCameraModeButtonRect, editColor, "Edit", Color.White); 
+            DrawButton(_fpsCameraModeButtonRect, fpsColor, "Follow", Color.White);
+            DrawButton(_editCameraModeButtonRect, editColor, "Free", Color.White);
+            DrawButton(_fromAboveCameraModeButtonRect, fromAboveColor, "Top", Color.White);
+        }
+        
+        /// <summary>
+        /// Draw camera rotation controls
+        /// </summary>
+        private void DrawCameraRotationControls()
+        {
+            // Draw camera rotation buttons
+            DrawButton(_rotateCameraUpButtonRect, Color.Black * 0.6f, "▲", Color.White);
+            DrawButton(_rotateCameraDownButtonRect, Color.Black * 0.6f, "▼", Color.White);
+            DrawButton(_rotateCameraLeftButtonRect, Color.Black * 0.6f, "◄", Color.White);
+            DrawButton(_rotateCameraRightButtonRect, Color.Black * 0.6f, "►", Color.White);
         }
         
         /// <summary>

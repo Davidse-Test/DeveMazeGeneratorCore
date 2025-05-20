@@ -315,6 +315,39 @@ namespace DeveMazeGeneratorMonoGame
         {
             return UseNewCamera ? newcamera : null;
         }
+        
+        /// <summary>
+        /// Sets the camera mode based on ActiveCameraMode values (1-4)
+        /// </summary>
+        /// <param name="mode">Camera mode (1: Follow, 2: Free, 3: FromAbove, 4: Chase)</param>
+        public void SetCameraMode(int mode)
+        {
+            // Enable new camera if not already enabled
+            if (!UseNewCamera)
+            {
+                UseNewCamera = true;
+            }
+            
+            // Set camera mode
+            switch (mode)
+            {
+                case 1: // FollowCamera
+                    camera.ActiveCameraMode = ActiveCameraMode.FollowCamera;
+                    break;
+                case 2: // FreeCamera
+                    camera.ActiveCameraMode = ActiveCameraMode.FreeCamera;
+                    break;
+                case 3: // FromAboveCamera
+                    camera.ActiveCameraMode = ActiveCameraMode.FromAboveCamera;
+                    camera.leftrightRot = 0.15f;
+                    camera.updownRot = -0.72f;
+                    drawRoof = false;
+                    break;
+                case 4: // ChaseCamera
+                    camera.ActiveCameraMode = ActiveCameraMode.ChaseCamera;
+                    break;
+            }
+        }
 
         #region Mobile UI Control Methods
 
