@@ -316,6 +316,167 @@ namespace DeveMazeGeneratorMonoGame
             return UseNewCamera ? newcamera : null;
         }
         
+        #region Mobile UI Control Methods
+        
+        /// <summary>
+        /// Gets the current maze width
+        /// </summary>
+        public int MazeWidth => curMazeWidth;
+        
+        /// <summary>
+        /// Gets the current maze height
+        /// </summary>
+        public int MazeHeight => curMazeHeight;
+        
+        /// <summary>
+        /// Gets the current algorithm name
+        /// </summary>
+        public string CurrentAlgorithmName => algorithms[currentAlgorithm].GetType().Name;
+        
+        /// <summary>
+        /// Whether the roof is currently being drawn
+        /// </summary>
+        public bool DrawRoof => drawRoof;
+        
+        /// <summary>
+        /// Whether lighting is currently enabled
+        /// </summary>
+        public bool Lighting => lighting;
+        
+        /// <summary>
+        /// Whether the path is currently being drawn
+        /// </summary>
+        public bool DrawPath => drawPath;
+        
+        /// <summary>
+        /// Whether the UI is currently being shown
+        /// </summary>
+        public bool ShowUI => showUi;
+        
+        /// <summary>
+        /// Increase the maze size
+        /// </summary>
+        public void IncreaseMazeSize()
+        {
+            numbertje = 0;
+            curMazeWidth *= 2;
+            curMazeHeight *= 2;
+            GenerateMaze();
+        }
+        
+        /// <summary>
+        /// Decrease the maze size
+        /// </summary>
+        public void DecreaseMazeSize()
+        {
+            if (curMazeWidth > 4 && curMazeHeight > 4)
+            {
+                numbertje = 0;
+                curMazeWidth /= 2;
+                curMazeHeight /= 2;
+                if (curMazeWidth < 1)
+                    curMazeWidth = 1;
+                if (curMazeHeight < 1)
+                    curMazeHeight = 1;
+                GenerateMaze();
+            }
+        }
+        
+        /// <summary>
+        /// Switch to the previous algorithm
+        /// </summary>
+        public void PreviousAlgorithm()
+        {
+            currentAlgorithm--;
+            if (currentAlgorithm < 0)
+            {
+                currentAlgorithm = algorithms.Count - 1;
+            }
+            numbertje = 0;
+            GenerateMaze();
+        }
+        
+        /// <summary>
+        /// Switch to the next algorithm
+        /// </summary>
+        public void NextAlgorithm()
+        {
+            currentAlgorithm++;
+            if (currentAlgorithm >= algorithms.Count)
+            {
+                currentAlgorithm = 0;
+            }
+            numbertje = 0;
+            GenerateMaze();
+        }
+        
+        /// <summary>
+        /// Regenerate the maze with current settings
+        /// </summary>
+        public void RegenerateMaze()
+        {
+            numbertje = 0;
+            GenerateMaze();
+        }
+        
+        /// <summary>
+        /// Toggle roof visibility
+        /// </summary>
+        public void ToggleRoof()
+        {
+            drawRoof = !drawRoof;
+        }
+        
+        /// <summary>
+        /// Toggle lighting
+        /// </summary>
+        public void ToggleLighting()
+        {
+            lighting = !lighting;
+        }
+        
+        /// <summary>
+        /// Toggle path visibility
+        /// </summary>
+        public void TogglePath()
+        {
+            drawPath = !drawPath;
+        }
+        
+        /// <summary>
+        /// Toggle UI visibility
+        /// </summary>
+        public void ToggleUI()
+        {
+            showUi = !showUi;
+        }
+        
+        /// <summary>
+        /// Increase animation speed
+        /// </summary>
+        public void IncreaseSpeed()
+        {
+            speedFactor *= 2;
+            numbertje = (numbertje - 1f) / 2f + 1f;
+
+            if (speedFactor <= 0)
+            {
+                numbertje = 0;
+                speedFactor = 1;
+            }
+        }
+        
+        /// <summary>
+        /// Decrease animation speed
+        /// </summary>
+        public void DecreaseSpeed()
+        {
+            speedFactor = Math.Max(1, speedFactor / 2);
+            numbertje = (numbertje - 1f) * 2f + 1f;
+        }
+        
+        #endregion
+        
         /// <summary>
         /// Toggle the NewCamera flag to enable the Basic3dExampleCamera
         /// </summary>
