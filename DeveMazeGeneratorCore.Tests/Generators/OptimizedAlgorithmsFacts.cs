@@ -91,13 +91,13 @@ namespace DeveMazeGeneratorCore.Tests.Generators
         }
 
         [Fact]
-        public void CombinedOptimization_GeneratesValidMaze()
+        public void CombinedImprovedOptimization_GeneratesValidMaze()
         {
             // Arrange
-            var generator = new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined();
+            var generator = new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved();
 
             // Act
-            var maze = MazeGenerator.Generate<AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined, BitArreintjeFastInnerMap, NetRandom>(TestMazeSize, TestMazeSize, TestSeed, null);
+            var maze = MazeGenerator.Generate<AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved, BitArreintjeFastInnerMap, NetRandom>(TestMazeSize, TestMazeSize, TestSeed, null);
 
             // Assert
             Assert.True(MazeVerifier.IsPerfectMaze(maze.InnerMap));
@@ -120,7 +120,8 @@ namespace DeveMazeGeneratorCore.Tests.Generators
                 new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection(),
                 new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber(),
                 new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks(),
-                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined()
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined(),
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved()
             };
 
             // Act & Assert
