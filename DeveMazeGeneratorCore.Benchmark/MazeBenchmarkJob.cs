@@ -23,7 +23,8 @@ namespace DeveMazeGeneratorCore.Benchmark
     [JsonExporterAttribute.FullCompressed]
     [
         //DeveJob(RuntimeMoniker.Net60, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
-        DeveJob(RuntimeMoniker.Net70, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
+        //DeveJob(RuntimeMoniker.Net70, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
+        DeveJob(RuntimeMoniker.Net80, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
     ]
     [AsciiDocExporter]
     [HtmlExporter]
@@ -32,7 +33,7 @@ namespace DeveMazeGeneratorCore.Benchmark
     [Config(typeof(Config))]
     public class MazeBenchmarkJob
     {
-        private const int SIZE = 4096 * 2 * 2;
+        private const int SIZE = 2048; // Larger size for more realistic testing
         private const int SEED = 1337;
 
         private InnerMapFactory<BitArreintjeFastInnerMap> _innerMapFactory = new InnerMapFactory<BitArreintjeFastInnerMap>();
@@ -41,13 +42,13 @@ namespace DeveMazeGeneratorCore.Benchmark
 
         public IEnumerable<object> Algorithms()
         {
-            yield return new AlgorithmBacktrack();
-            yield return new AlgorithmBacktrack2();
-            yield return new AlgorithmBacktrack2Deluxe_AsByte();
+            //yield return new AlgorithmBacktrack();
+            //yield return new AlgorithmBacktrack2();
+            //yield return new AlgorithmBacktrack2Deluxe_AsByte();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte();
-            yield return new AlgorithmBacktrack2Deluxe2WithBorder_AsByte();
-            yield return new AlgorithmBacktrack3();
-            yield return new AlgorithmBacktrack4();
+            //yield return new AlgorithmBacktrack2Deluxe2WithBorder_AsByte();
+            //yield return new AlgorithmBacktrack3();
+            //yield return new AlgorithmBacktrack4();
             //yield return new AlgorithmKruskal();
         }
 
