@@ -52,9 +52,30 @@ namespace DeveMazeGeneratorCore.Benchmark
             //yield return new AlgorithmKruskal();
         }
 
+        public IEnumerable<object> OptimizedAlgorithms()
+        {
+            // Original for comparison
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte();
+            // Individual optimizations
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedStackAllocation();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMazePointStructure();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks();
+            // Combined optimizations
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined();
+        }
+
         [Benchmark]
         [ArgumentsSource(nameof(Algorithms))]
         public void Simple(IAlgorithm<Maze> algorithm)
+        {
+            algorithm.GoGenerate(SIZE, SIZE, SEED, _innerMapFactory, _randomFactory, _action);
+        }
+
+        [Benchmark]
+        [ArgumentsSource(nameof(OptimizedAlgorithms))]
+        public void OptimizedComparison(IAlgorithm<Maze> algorithm)
         {
             algorithm.GoGenerate(SIZE, SIZE, SEED, _innerMapFactory, _randomFactory, _action);
         }
