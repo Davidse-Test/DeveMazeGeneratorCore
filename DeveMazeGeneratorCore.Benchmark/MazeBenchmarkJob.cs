@@ -23,7 +23,8 @@ namespace DeveMazeGeneratorCore.Benchmark
     [JsonExporterAttribute.FullCompressed]
     [
         //DeveJob(RuntimeMoniker.Net60, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
-        DeveJob(RuntimeMoniker.Net70, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
+        //DeveJob(RuntimeMoniker.Net70, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
+        DeveJob(RuntimeMoniker.Net80, launchCount: 1, warmupCount: 2, targetCount: 3, invocationCount: 1),
     ]
     [AsciiDocExporter]
     [HtmlExporter]
