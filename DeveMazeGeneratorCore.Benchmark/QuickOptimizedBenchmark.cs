@@ -1,4 +1,4 @@
-﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
@@ -13,44 +13,18 @@ using System.Collections.Generic;
 namespace DeveMazeGeneratorCore.Benchmark
 {
     [MemoryDiagnoser]
-    //[InliningDiagnoser]
-    //[TailCallDiagnoser]
-    //[EtwProfiler]
-    //[ConcurrencyVisualizerProfiler]
-    //[NativeMemoryProfiler]
-    //[ThreadingDiagnoser]
-    [JsonExporterAttribute.Full]
-    [JsonExporterAttribute.FullCompressed]
     [
-        //DeveJob(RuntimeMoniker.Net60, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
-        //DeveJob(RuntimeMoniker.Net70, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
-        DeveJob(RuntimeMoniker.Net90, launchCount: 1, warmupCount: 4, targetCount: 50, invocationCount: 1),
+        DeveJob(RuntimeMoniker.Net90, launchCount: 1, warmupCount: 1, targetCount: 3, invocationCount: 1),
     ]
-    [AsciiDocExporter]
-    [HtmlExporter]
-    [MarkdownExporterAttribute.GitHub]
-    [MinColumn, MaxColumn]
     [Config(typeof(Config))]
-    public class MazeBenchmarkJob
+    public class QuickOptimizedBenchmark
     {
-        private const int SIZE = 4096 * 2 * 2;
+        private const int SMALL_SIZE = 1024; // Much smaller size for quick testing
         private const int SEED = 1337;
 
         private InnerMapFactory<BitArreintjeFastInnerMap> _innerMapFactory = new InnerMapFactory<BitArreintjeFastInnerMap>();
         private RandomFactory<XorShiftRandom> _randomFactory = new RandomFactory<XorShiftRandom>();
         private NoAction _action = new NoAction();
-
-        public IEnumerable<object> Algorithms()
-        {
-            yield return new AlgorithmBacktrack();
-            yield return new AlgorithmBacktrack2();
-            yield return new AlgorithmBacktrack2Deluxe_AsByte();
-            yield return new AlgorithmBacktrack2Deluxe2_AsByte();
-            yield return new AlgorithmBacktrack2Deluxe2WithBorder_AsByte();
-            yield return new AlgorithmBacktrack3();
-            yield return new AlgorithmBacktrack4();
-            //yield return new AlgorithmKruskal();
-        }
 
         public IEnumerable<object> OptimizedAlgorithms()
         {
@@ -62,6 +36,7 @@ namespace DeveMazeGeneratorCore.Benchmark
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks();
+            // Additional individual optimizations
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSpanStack();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBranchPrediction();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedInlining();
@@ -90,18 +65,11 @@ namespace DeveMazeGeneratorCore.Benchmark
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBestCombined();
         }
 
-        [Benchmark]
-        [ArgumentsSource(nameof(Algorithms))]
-        public void Simple(IAlgorithm<Maze> algorithm)
-        {
-            algorithm.GoGenerate(SIZE, SIZE, SEED, _innerMapFactory, _randomFactory, _action);
-        }
-
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [ArgumentsSource(nameof(OptimizedAlgorithms))]
-        public void OptimizedComparison(IAlgorithm<Maze> algorithm)
+        public void QuickBenchmark(IAlgorithm<Maze> algorithm)
         {
-            algorithm.GoGenerate(SIZE, SIZE, SEED, _innerMapFactory, _randomFactory, _action);
+            algorithm.GoGenerate(SMALL_SIZE, SMALL_SIZE, SEED, _innerMapFactory, _randomFactory, _action);
         }
 
         private class Config : ManualConfig

@@ -1,0 +1,89 @@
+﻿using DeveMazeGeneratorCore.Factories;
+using DeveMazeGeneratorCore.Generators;
+using DeveMazeGeneratorCore.Generators.Helpers;
+using DeveMazeGeneratorCore.Generators.SpeedOptimization;
+using DeveMazeGeneratorCore.InnerMaps;
+using System.Diagnostics;
+
+Console.WriteLine("Simple Performance Test for Optimized Algorithms");
+
+const int TEST_SIZE = 512;  // Smaller for quick testing
+const int TEST_ITERATIONS = 1;   // Just one iteration for the large test
+const int SEED = 1337;
+
+Console.WriteLine($"Maze Size: {TEST_SIZE}x{TEST_SIZE}");
+Console.WriteLine($"Iterations: {TEST_ITERATIONS}");
+Console.WriteLine();
+
+var innerMapFactory = new InnerMapFactory<BitArreintjeFastInnerMap>();
+var randomFactory = new RandomFactory<XorShiftRandom>();
+var noAction = new NoAction();
+
+var algorithms = new (string name, IAlgorithm<DeveMazeGeneratorCore.Mazes.Maze> algorithm)[]
+{
+    ("Original", new AlgorithmBacktrack2Deluxe2_AsByte()),
+    ("StackAllocation", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedStackAllocation()),
+    ("MazePointStructure", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMazePointStructure()),
+    ("DirectionSelection", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection()),
+    ("RandomNumber", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber()),
+    ("Callbacks", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks()),
+    ("SIMD", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMD()),
+    ("SIMDAdvanced", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDAdvanced()),
+    ("MemoryLayout", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMemoryLayout()),
+    ("CacheLocality", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCacheLocality()),
+    ("SIMDMemoryCombined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDMemoryCombined()),
+    // Step-by-step SIMD implementations
+    ("SIMDStep1", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep1()),
+    ("SIMDStep2", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep2()),
+    ("SIMDStep3", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep3()),
+    ("SIMDStep4", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep4()),
+    ("SIMDStep5", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep5()),
+    ("SIMDStep6", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep6()),
+    ("SIMDStep7", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep7()),
+    ("SIMDStep8", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep8()),
+    ("SIMDStep9", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep9()),
+    ("SIMDStep10", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep10()),
+    ("Combined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined()),
+    ("CombinedImproved", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved())
+};
+
+Console.WriteLine($"{"Algorithm",-20} {"Mean (ms)",-12} {"Min (ms)",-12} {"Max (ms)",-12} {"Improvement",-12}");
+Console.WriteLine(new string('-', 75));
+
+double baselineTime = 0;
+
+foreach (var (name, algorithm) in algorithms)
+{
+    var times = new double[TEST_ITERATIONS];
+    
+    // Warm up
+    algorithm.GoGenerate(TEST_SIZE, TEST_SIZE, SEED, innerMapFactory, randomFactory, noAction);
+
+    // Actual test
+    for (int i = 0; i < TEST_ITERATIONS; i++)
+    {
+        var sw = Stopwatch.StartNew();
+        algorithm.GoGenerate(TEST_SIZE, TEST_SIZE, SEED + i, innerMapFactory, randomFactory, noAction);
+        sw.Stop();
+        times[i] = sw.Elapsed.TotalMilliseconds;
+    }
+
+    var mean = times.Average();
+    var min = times.Min();
+    var max = times.Max();
+
+    if (name == "Original")
+    {
+        baselineTime = mean;
+        Console.WriteLine($"{name,-20} {mean:F2}      {min:F2}      {max:F2}      {"baseline",-12}");
+    }
+    else
+    {
+        var improvement = ((baselineTime - mean) / baselineTime) * 100;
+        var sign = improvement >= 0 ? "+" : "";
+        Console.WriteLine($"{name,-20} {mean:F2}      {min:F2}      {max:F2}      {sign}{improvement:F1}%");
+    }
+}
+
+Console.WriteLine();
+Console.WriteLine("Note: Positive improvement percentage means the optimization is faster than the original.");
