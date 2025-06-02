@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 Console.WriteLine("Simple Performance Test for Optimized Algorithms");
 
-const int TEST_SIZE = 2048;  // Larger size - getting closer to 16384
+const int TEST_SIZE = 512;  // Smaller for quick testing
 const int TEST_ITERATIONS = 1;   // Just one iteration for the large test
 const int SEED = 1337;
 
@@ -27,6 +27,11 @@ var algorithms = new (string name, IAlgorithm<DeveMazeGeneratorCore.Mazes.Maze> 
     ("DirectionSelection", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection()),
     ("RandomNumber", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber()),
     ("Callbacks", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks()),
+    ("SIMD", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMD()),
+    ("SIMDAdvanced", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDAdvanced()),
+    ("MemoryLayout", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMemoryLayout()),
+    ("CacheLocality", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCacheLocality()),
+    ("SIMDMemoryCombined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDMemoryCombined()),
     ("Combined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined()),
     ("CombinedImproved", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved())
 };

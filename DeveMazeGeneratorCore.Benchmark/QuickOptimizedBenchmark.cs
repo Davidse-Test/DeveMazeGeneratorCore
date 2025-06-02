@@ -42,6 +42,12 @@ namespace DeveMazeGeneratorCore.Benchmark
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedInlining();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedLoopUnrolling();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBitmaskDirections();
+            // SIMD and memory layout optimizations
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMD();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDAdvanced();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMemoryLayout();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCacheLocality();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDMemoryCombined();
             // Combined optimizations
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved();
