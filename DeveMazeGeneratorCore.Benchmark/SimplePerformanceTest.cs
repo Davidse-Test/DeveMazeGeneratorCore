@@ -17,7 +17,7 @@ namespace DeveMazeGeneratorCore.Benchmark
         private const int TEST_ITERATIONS = 5;
         private const int SEED = 1337;
 
-        public static void Main()
+        public static void RunTest()
         {
             Console.WriteLine("Simple Performance Test for Optimized Algorithms");
             Console.WriteLine($"Maze Size: {TEST_SIZE}x{TEST_SIZE}");
@@ -36,7 +36,14 @@ namespace DeveMazeGeneratorCore.Benchmark
                 ("DirectionSelection", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection()),
                 ("RandomNumber", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber()),
                 ("Callbacks", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks()),
-                ("Combined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined())
+                ("Combined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined()),
+                // New optimizations
+                ("SpanStack", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSpanStack()),
+                ("BranchPrediction", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBranchPrediction()),
+                ("Inlining", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedInlining()),
+                ("LoopUnrolling", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedLoopUnrolling()),
+                ("BitmaskDirections", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBitmaskDirections()),
+                ("BestCombined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBestCombined())
             };
 
             Console.WriteLine($"{"Algorithm",-20} {"Mean (ms)",-12} {"Min (ms)",-12} {"Max (ms)",-12} {"Improvement",-12}");
