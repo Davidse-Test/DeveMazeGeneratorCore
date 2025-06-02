@@ -32,6 +32,17 @@ var algorithms = new (string name, IAlgorithm<DeveMazeGeneratorCore.Mazes.Maze> 
     ("MemoryLayout", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMemoryLayout()),
     ("CacheLocality", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCacheLocality()),
     ("SIMDMemoryCombined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDMemoryCombined()),
+    // Step-by-step SIMD implementations
+    ("SIMDStep1", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep1()),
+    ("SIMDStep2", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep2()),
+    ("SIMDStep3", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep3()),
+    ("SIMDStep4", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep4()),
+    ("SIMDStep5", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep5()),
+    ("SIMDStep6", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep6()),
+    ("SIMDStep7", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep7()),
+    ("SIMDStep8", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep8()),
+    ("SIMDStep9", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep9()),
+    ("SIMDStep10", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSIMDStep10()),
     ("Combined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined()),
     ("CombinedImproved", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved())
 };
