@@ -120,8 +120,14 @@ namespace DeveMazeGeneratorCore.Tests.Generators
                 new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection(),
                 new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber(),
                 new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks(),
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSpanStack(),
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBranchPrediction(),
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedInlining(),
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedLoopUnrolling(),
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBitmaskDirections(),
                 new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined(),
-                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved()
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved(),
+                new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBestCombined()
             };
 
             // Act & Assert

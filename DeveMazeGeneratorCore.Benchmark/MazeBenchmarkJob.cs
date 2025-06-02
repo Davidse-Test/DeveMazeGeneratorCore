@@ -62,8 +62,15 @@ namespace DeveMazeGeneratorCore.Benchmark
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber();
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSpanStack();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBranchPrediction();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedInlining();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedLoopUnrolling();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBitmaskDirections();
             // Combined optimizations
             yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombinedImproved();
+            yield return new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBestCombined();
         }
 
         [Benchmark]
