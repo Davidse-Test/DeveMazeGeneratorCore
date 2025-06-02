@@ -17,27 +17,34 @@
 //        private const int TEST_ITERATIONS = 5;
 //        private const int SEED = 1337;
 
-//        public static void Main()
-//        {
-//            Console.WriteLine("Simple Performance Test for Optimized Algorithms");
-//            Console.WriteLine($"Maze Size: {TEST_SIZE}x{TEST_SIZE}");
-//            Console.WriteLine($"Iterations: {TEST_ITERATIONS}");
-//            Console.WriteLine();
+        public static void RunTest()
+        {
+            Console.WriteLine("Simple Performance Test for Optimized Algorithms");
+            Console.WriteLine($"Maze Size: {TEST_SIZE}x{TEST_SIZE}");
+            Console.WriteLine($"Iterations: {TEST_ITERATIONS}");
+            Console.WriteLine();
 
 //            var innerMapFactory = new InnerMapFactory<BitArreintjeFastInnerMap>();
 //            var randomFactory = new RandomFactory<XorShiftRandom>();
 //            var noAction = new NoAction();
 
-//            var algorithms = new (string name, IAlgorithm<Mazes.Maze> algorithm)[]
-//            {
-//                ("Original", new AlgorithmBacktrack2Deluxe2_AsByte()),
-//                ("StackAllocation", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedStackAllocation()),
-//                ("MazePointStructure", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMazePointStructure()),
-//                ("DirectionSelection", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection()),
-//                ("RandomNumber", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber()),
-//                ("Callbacks", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks()),
-//                ("Combined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined())
-//            };
+            var algorithms = new (string name, IAlgorithm<Mazes.Maze> algorithm)[]
+            {
+                ("Original", new AlgorithmBacktrack2Deluxe2_AsByte()),
+                ("StackAllocation", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedStackAllocation()),
+                ("MazePointStructure", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedMazePointStructure()),
+                ("DirectionSelection", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedDirectionSelection()),
+                ("RandomNumber", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedRandomNumber()),
+                ("Callbacks", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCallbacks()),
+                ("Combined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedCombined()),
+                // New optimizations
+                ("SpanStack", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedSpanStack()),
+                ("BranchPrediction", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBranchPrediction()),
+                ("Inlining", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedInlining()),
+                ("LoopUnrolling", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedLoopUnrolling()),
+                ("BitmaskDirections", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBitmaskDirections()),
+                ("BestCombined", new AlgorithmBacktrack2Deluxe2_AsByte_OptimizedBestCombined())
+            };
 
 //            Console.WriteLine($"{"Algorithm",-20} {"Mean (ms)",-12} {"Min (ms)",-12} {"Max (ms)",-12} {"Improvement",-12}");
 //            Console.WriteLine(new string('-', 75));
